@@ -13,12 +13,22 @@ app = Flask(
 )
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'english_ai_tutor_secret_key_2026_x99')
 
+# Active Groq Models (October 2026)
 SUPPORTED_MODELS = [
-    {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B (Recommended)", "desc": "Самая умная модель для глубоких объяснений и свободной речи"},
-    {"id": "llama-3.1-8b-instant", "name": "Llama 3.1 8B Instant", "desc": "Сверхбыстрая легковесная модель для мгновенных реплик"},
-    {"id": "mixtral-8x7b-32768", "name": "Mixtral 8x7B", "desc": "Отличный баланс скорости и качества контекста"},
-    {"id": "gemma2-9b-it", "name": "Gemma 2 9B IT", "desc": "Компактная и эффективная модель от Google в Groq Cloud"}
+    {"id": "openai/gpt-oss-120b", "name": "OpenAI GPT-OSS 120B (Рекомендуется)", "desc": "Флагманская модель 120B: глубокие объяснения, живой диалог и грамматика"},
+    {"id": "openai/gpt-oss-20b", "name": "OpenAI GPT-OSS 20B (Сверхбыстрая)", "desc": "Мгновенные реплики со скоростью до 1000 токенов/сек"},
+    {"id": "qwen/qwen3.8-27b", "name": "Qwen 3.8 27B", "desc": "Отличный баланс скорости, логики и качества диалога"}
 ]
+
+# Automatic resolver for older/deprecated Groq models
+DEPRECATED_MODELS = {
+    "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+    "llama-3.1-8b-instant": "openai/gpt-oss-20b",
+    "mixtral-8x7b-32768": "openai/gpt-oss-120b",
+    "gemma2-9b-it": "openai/gpt-oss-20b",
+    "qwen/qwen3-32b": "openai/gpt-oss-120b",
+    "meta-llama/llama-4-scout-17b-16e-instruct": "openai/gpt-oss-120b"
+}
 
 def build_system_prompt(level="intermediate", style="friendly"):
     return f"""You are 'Nova', an empathetic, engaging, and professional bilingual AI English tutor and conversational partner.
@@ -46,97 +56,86 @@ Bilingual Tutoring Guidelines:
 
 @app.route('/')
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user = db.get_user_by_id(session['user_id'])
+    # Pure SPA: Render the complete app directly with demo guest session if unauthenticated
+    user = None
+    if 'user_id' in session:
+        user = db.get_user_by_id(session['user_id'])
+    
     if not user:
-        # In serverless environments, if instance reloaded, re-create demo user smoothly
         user = db.get_or_create_demo_user()
         session['user_id'] = user['id']
         session['username'] = user['username']
-    settings = db.get_user_settings(user['id'])
-    history = db.get_recent_chat_history(user['id'], limit=30)
-    return render_template('index.html', user=user, settings=settings, models=SUPPORTED_MODELS, history=history)
 
-@app.route('/demo-login')
-def demo_login():
-    user = db.get_or_create_demo_user()
-    session['user_id'] = user['id']
-    session['username'] = user['username']
-    flash('Вы вошли как гость (демо-режим). Начните диалог или введите API-ключ в настройках.', 'info')
-    return redirect(url_for('index'))
+    settings = db.get_user_settings(user['id'])
+    # Automatically migrate deprecated models in user settings
+    if settings.get('model_name') in DEPRECATED_MODELS:
+        new_model = DEPRECATED_MODELS[settings['model_name']]
+        db.update_user_settings(user['id'], model_name=new_model)
+        settings = db.get_user_settings(user['id'])
+
+    history = db.get_recent_chat_history(user['id'], limit=30)
+    return render_template('index.html', user=user, settings=settings, history=history, models=SUPPORTED_MODELS)
 
 @app.route('/standalone')
 def standalone():
-    standalone_file = os.path.join(BASE_DIR, 'english_ai_tutor.html')
-    if os.path.exists(standalone_file):
-        return send_from_directory(BASE_DIR, 'english_ai_tutor.html')
-    return redirect(url_for('index'))
+    return send_from_directory(os.path.join(BASE_DIR, 'public'), 'index.html')
 
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    return send_from_directory(os.path.join(BASE_DIR, 'static'), filename)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route('/api/auth/status', methods=['GET'])
+def auth_status():
     if 'user_id' in session:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '').strip()
-        
-        if not username or not email or not password:
-            flash('Пожалуйста, заполните все поля формы.', 'danger')
-            return render_template('register.html', username=username, email=email)
-            
-        user_id, error = db.create_user(username, email, password)
-        if error:
-            flash(error, 'danger')
-            return render_template('register.html', username=username, email=email)
-            
+        user = db.get_user_by_id(session['user_id'])
+        if user:
+            return jsonify({"authenticated": True, "username": user['username'], "email": user['email']})
+    return jsonify({"authenticated": False})
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json() or {}
+    email = data.get('email', '').strip()
+    password = data.get('password', '')
+    user = db.authenticate_user(email, password)
+    if user:
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        return jsonify({"status": "success", "username": user['username']})
+    return jsonify({"error": "invalid_credentials", "message": "Неверный email или пароль"}), 401
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    password = data.get('password', '')
+    if not username or not email or not password:
+        return jsonify({"error": "missing_fields", "message": "Заполните все поля"}), 400
+    user_id = db.create_user(username, email, password)
+    if user_id:
         session['user_id'] = user_id
         session['username'] = username
-        flash('Регистрация успешна! Добро пожаловать.', 'success')
-        return redirect(url_for('index'))
-        
-    return render_template('register.html')
+        return jsonify({"status": "success", "username": username})
+    return jsonify({"error": "email_exists", "message": "Email уже зарегистрирован"}), 400
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if 'user_id' in session:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '').strip()
-        
-        user = db.authenticate_user(email, password)
-        if user:
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            return redirect(url_for('index'))
-        else:
-            flash('Неверный адрес электронной почты или пароль.', 'danger')
-            return render_template('login.html', email=email)
-            
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
     session.clear()
-    flash('Вы успешно вышли из системы.', 'info')
-    return redirect(url_for('login'))
+    return jsonify({"status": "success"})
 
 @app.route('/api/settings', methods=['POST'])
-def save_settings():
+def update_settings():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
+        user = db.get_or_create_demo_user()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+
     data = request.get_json() or {}
+    model_name = data.get('model_name')
+    if model_name in DEPRECATED_MODELS:
+        model_name = DEPRECATED_MODELS[model_name]
+
     db.update_user_settings(
         session['user_id'],
         groq_api_key=data.get('groq_api_key'),
-        model_name=data.get('model_name'),
+        model_name=model_name,
         english_level=data.get('english_level'),
         tutor_style=data.get('tutor_style'),
         voice_rate=data.get('voice_rate'),
@@ -149,7 +148,9 @@ def save_settings():
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
+        user = db.get_or_create_demo_user()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
         
     data = request.get_json() or {}
     user_message = data.get('message', '').strip()
@@ -157,14 +158,18 @@ def chat():
         return jsonify({"error": "Сообщение не может быть пустым"}), 400
         
     settings = db.get_user_settings(session['user_id'])
-    api_key = settings.get('groq_api_key')
+    api_key = settings.get('groq_api_key') or data.get('api_key')
     if not api_key:
         return jsonify({
             "error": "api_key_missing",
-            "message": "Пожалуйста, введите ваш Groq API ключ в Настройках приложения (кнопка в правом верхнем углу)."
+            "message": "Пожалуйста, введите ваш Groq API ключ в Настройках приложения."
         }), 400
         
-    model = settings.get('model_name') or 'llama-3.3-70b-versatile'
+    model = settings.get('model_name') or 'openai/gpt-oss-120b'
+    if model in DEPRECATED_MODELS:
+        model = DEPRECATED_MODELS[model]
+        db.update_user_settings(session['user_id'], model_name=model)
+
     level = settings.get('english_level') or 'intermediate'
     style = settings.get('tutor_style') or 'friendly'
     
@@ -179,17 +184,18 @@ def chat():
     for msg in history_records:
         messages.append({"role": msg['role'], "content": msg['content']})
         
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 1024
+    }
+
     try:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 1024
-        }
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers=headers,
@@ -197,6 +203,20 @@ def chat():
             timeout=30
         )
         
+        # Automatic fallback if model is 404 or decommissioned
+        if response.status_code == 404 and "model_not_found" in response.text and model != "openai/gpt-oss-120b":
+            print(f"Model {model} not found, falling back to openai/gpt-oss-120b")
+            payload["model"] = "openai/gpt-oss-120b"
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            if response.status_code == 200:
+                model = "openai/gpt-oss-120b"
+                db.update_user_settings(session['user_id'], model_name="openai/gpt-oss-120b")
+
         if response.status_code == 200:
             res_data = response.json()
             bot_text = res_data['choices'][0]['message']['content']
@@ -222,26 +242,17 @@ def clear_chat():
 
 @app.errorhandler(404)
 def not_found(e):
-    if 'user_id' in session:
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.errorhandler(500)
 def server_error(e):
-    if 'user_id' in session:
-        return redirect(url_for('index'))
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.errorhandler(Exception)
 def handle_exception(e):
     if request.path.startswith('/api/'):
         return jsonify({"error": "server_error", "message": str(e)}), 500
-    try:
-        if 'user_id' in session:
-            return redirect(url_for('index'))
-        return redirect(url_for('login'))
-    except Exception:
-        return render_template('login.html', error="Произошла временная ошибка, попробуйте войти снова."), 200
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     print("Starting English AI Tutor Flask Server on http://127.0.0.1:5000 ...")
