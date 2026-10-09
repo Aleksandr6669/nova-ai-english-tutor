@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Nova — Интерактивный AI Тьютор Английского{% endblock %}
+{% block content %}
+<div class="main-layout">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="nav-brand">
+            <div class="avatar-mini">
+                <div class="mini-orb"></div>
+            </div>
+            <div class="brand-meta">
+                <h1>Nova <span>AI Tutor</span></h1>
+                <p class="status-indicator"><span class="status-dot"></span> Online &bull; Groq Engine</p>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <button id="toggle-voice-btn" class="nav-btn voice-toggle-btn active" title="Автоматическое озвучивание">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <span class="btn-label">TTS</span>
+            </button>
+            <button id="open-settings-btn" class="nav-btn settings-btn" title="Настройки модели и Groq API">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span class="btn-label">Настройки</span>
+            </button>
+            <div class="user-profile">
+                <span class="username">{{ user['username'] }}</span>
+                <a href="{{ url_for('logout') }}" class="nav-btn logout-btn" title="Выход">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace: Character Stage + Chat Workspace -->
+    <div class="workspace-grid">
+        <!-- Left / Top: Virtual Character Stage -->
+        <section class="character-stage">
+            <div class="stage-container">
+                <!-- 3D Avatar Placeholder Container (Ready for Three.js / Canvas 3D Character) -->
+                <div class="avatar-viewport" id="avatar-viewport">
+                    <div class="avatar-halo"></div>
+                    <div class="avatar-orb" id="character-orb">
+                        <div class="orb-core"></div>
+                        <div class="orb-ring ring-1"></div>
+                        <div class="orb-ring ring-2"></div>
+                        <div class="orb-wave wave-1"></div>
+                        <div class="orb-wave wave-2"></div>
+                        <div class="orb-particles" id="orb-particles"></div>
+                    </div>
+                </div>
+
+                <!-- Character Status & Speech Indicator -->
+                <div class="character-feedback">
+                    <div class="character-state-badge" id="character-state">
+                        <span class="state-icon">✨</span>
+                        <span class="state-text">Ready to talk</span>
+                    </div>
+                    <div class="sound-wave-visualizer" id="wave-visualizer">
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <!-- Quick English Practice Topics -->
+                <div class="practice-topics">
+                    <span class="topics-title">Быстрый старт:</span>
+                    <div class="topics-pills">
+                        <button class="topic-pill" data-prompt="Hi Nova! Can we have a friendly conversation to practice everyday English?">💬 Free Chat</button>
+                        <button class="topic-pill" data-prompt="Let's roleplay: You are a barista in London, and I want to order coffee and breakfast.">☕ Coffee Shop</button>
+                        <button class="topic-pill" data-prompt="Can you explain the difference between Present Perfect and Past Simple with examples?">📚 Grammar Tip</button>
+                        <button class="topic-pill" data-prompt="Teach me 3 advanced C1 idioms with their meanings and sample sentences.">🎯 Idioms</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right / Bottom: Interactive Chat Area -->
+        <section class="chat-section">
+            <div class="chat-container">
+                <!-- Messages Stream -->
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant-message welcome-msg">
+                        <div class="msg-avatar">
+                            <div class="avatar-glow"></div>
+                        </div>
+                        <div class="msg-body">
+                            <div class="msg-header">
+                                <span class="sender-name">Nova</span>
+                                <span class="msg-time">Just now</span>
+                            </div>
+                            <div class="msg-text">
+                                Hello, <strong>{{ user['username'] }}</strong>! 👋 I am <strong>Nova</strong>, your personal AI English tutor powered by Groq. 
+                                <br><br>
+                                You can talk to me via <strong>voice</strong> (click the microphone below) or type your messages. I will guide your conversation, correct mistakes, and help you speak English fluently!
+                                {% if not settings['groq_api_key'] %}
+                                <div class="api-key-warning">
+                                    ⚠️ <strong>Внимание:</strong> Не забудьте указать ваш <strong>Groq API ключ</strong> в <a href="#" id="link-open-settings">Настройках</a>, чтобы подключить выбранную модель.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for msg in history %}
+                    <div class="message {{ 'user-message' if msg['role'] == 'user' else 'assistant-message' }}">
+                        <div class="msg-avatar">
+                            {% if msg['role'] == 'assistant' %}
+                            <div class="avatar-glow"></div>
+                            {% else %}
+                            <div class="user-avatar-circle">{{ user['username'][:1].upper() }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="msg-body">
+                            <div class="msg-header">
+                                <span class="sender-name">{{ 'You' if msg['role'] == 'user' else 'Nova' }}</span>
+                                <span class="msg-time">{{ msg['timestamp'][11:16] if msg['timestamp'] else '' }}</span>
+                            </div>
+                            <div class="msg-text">{{ msg['content'] }}</div>
+                            {% if msg['role'] == 'assistant' %}
+                            <button class="speak-msg-btn" title="Озвучить ответ" onclick="speakText(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                <span>Слушать</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Input Controls Area -->
+                <div class="chat-input-area">
+                    <form id="chat-form" class="chat-form">
+                        <div class="input-controls">
+                            <!-- Voice Input Button (Speech-to-Text) -->
+                            <button type="button" id="voice-input-btn" class="action-btn voice-btn" title="Голосовой ввод (нажмите и говорите)">
+                                <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                <span class="pulse-ring"></span>
+                            </button>
+
+                            <!-- Text Input Box -->
+                            <textarea id="chat-input" placeholder="Type a message in English or click the microphone to speak..." rows="1" autocomplete="off"></textarea>
+
+                            <!-- Send Button -->
+                            <button type="submit" id="send-btn" class="action-btn send-btn" title="Отправить сообщение">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </button>
+                        </div>
+                        <div class="input-subtext">
+                            <span id="speech-recognition-status">Microphone: Ready</span>
+                            <button type="button" id="clear-chat-btn" class="clear-link">Очистить диалог</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Settings Modal Window -->
+<div class="modal-backdrop" id="settings-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <h3>Настройки AI и Голоса</h3>
+            </div>
+            <button class="close-modal-btn" id="close-settings-btn">&times;</button>
+        </div>
+
+        <form id="settings-form" class="modal-body">
+            <!-- Groq API Key -->
+            <div class="setting-item">
+                <label for="groq_api_key">Groq API Ключ</label>
+                <div class="input-wrap">
+                    <input type="password" id="groq_api_key" name="groq_api_key" value="{{ settings['groq_api_key'] }}" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
+                    <button type="button" id="toggle-key-visibility" class="mini-btn">Показать</button>
+                </div>
+                <small class="helper-text">Получить бесплатный API ключ можно на сайте <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></small>
+            </div>
+
+            <!-- Groq Model Selector -->
+            <div class="setting-item">
+                <label for="model_name">Модель Groq</label>
+                <select id="model_name" name="model_name" class="custom-select">
+                    {% for m in models %}
+                    <option value="{{ m.id }}" {% if settings['model_name'] == m.id %}selected{% endif %}>
+                        {{ m.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="helper-text" id="model-desc">Высокая скорость генерации и богатый словарь английского языка.</small>
+            </div>
+
+            <!-- English Proficiency Level -->
+            <div class="setting-item">
+                <label for="english_level">Уровень Английского Языка</label>
+                <select id="english_level" name="english_level" class="custom-select">
+                    <option value="beginner" {% if settings['english_level'] == 'beginner' %}selected{% endif %}>A1–A2 (Beginner / Элементарный)</option>
+                    <option value="intermediate" {% if settings['english_level'] == 'intermediate' %}selected{% endif %}>B1–B2 (Intermediate / Средний)</option>
+                    <option value="advanced" {% if settings['english_level'] == 'advanced' %}selected{% endif %}>C1–C2 (Advanced / Продвинутый)</option>
+                </select>
+            </div>
+
+            <!-- Tutor Style -->
+            <div class="setting-item">
+                <label for="tutor_style">Стиль обучения</label>
+                <select id="tutor_style" name="tutor_style" class="custom-select">
+                    <option value="friendly" {% if settings['tutor_style'] == 'friendly' %}selected{% endif %}>Дружелюбный и разговорный (Casual)</option>
+                    <option value="strict" {% if settings['tutor_style'] == 'strict' %}selected{% endif %}>Строгий с акцентом на грамматику (Grammar Focus)</option>
+                    <option value="business" {% if settings['tutor_style'] == 'business' %}selected{% endif %}>Деловой английский (Business English)</option>
+                    <option value="exam" {% if settings['tutor_style'] == 'exam' %}selected{% endif %}>Подготовка к экзаменам (IELTS / TOEFL)</option>
+                </select>
+            </div>
+
+            <!-- Voice Controls -->
+            <div class="setting-item">
+                <div class="toggle-row">
+                    <label for="auto_speak">Автоматически озвучивать ответы персонажа</label>
+                    <input type="checkbox" id="auto_speak" name="auto_speak" {% if settings['auto_speak'] %}checked{% endif %}>
+                </div>
+            </div>
+
+            <div class="setting-grid-2">
+                <div class="setting-item">
+                    <label for="voice_rate">Скорость речи: <span id="voice_rate_val">{{ settings['voice_rate'] }}x</span></label>
+                    <input type="range" id="voice_rate" name="voice_rate" min="0.7" max="1.3" step="0.05" value="{{ settings['voice_rate'] }}">
+                </div>
+                <div class="setting-item">
+                    <label for="voice_pitch">Тон голоса: <span id="voice_pitch_val">{{ settings['voice_pitch'] }}</span></label>
+                    <input type="range" id="voice_pitch" name="voice_pitch" min="0.8" max="1.2" step="0.05" value="{{ settings['voice_pitch'] }}">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-settings-btn">Отмена</button>
+                <button type="submit" class="btn btn-primary" id="save-settings-btn">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

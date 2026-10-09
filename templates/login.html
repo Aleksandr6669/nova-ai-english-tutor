@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Вход | AI English Assistant{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="brand-badge">
+                <span class="pulse-dot"></span>
+                <span>Nova AI English</span>
+            </div>
+            <h2>С возвращением!</h2>
+            <p>Войдите по почте, чтобы продолжить обучение с персональным ассистентом</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+            <div class="form-group">
+                <label for="email">Электронная почта</label>
+                <div class="input-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <input type="email" id="email" name="email" value="{{ email or '' }}" placeholder="student@example.com" required autocomplete="email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <div class="input-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Войти в систему</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
