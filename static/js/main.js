@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSettingsSheetBtn = document.getElementById('close-settings-sheet-btn');
     const settingsSheet = document.getElementById('settings-sheet');
     const linkOpenSettings = document.getElementById('link-open-settings');
+    const drawerVoiceToggle = document.getElementById('drawer-voice-toggle');
 
     // Chat & Voice Elements
     const chatForm = document.getElementById('chat-form');
@@ -59,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', closeDrawer);
     if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
 
-    // Settings Sheet Open/Close (Screenshot 1 Style)
+    // Settings Sheet Open/Close
     function openSettings() {
         closeDrawer();
         settingsSheet.classList.add('active');
@@ -81,13 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Avatar State Manager
     function setOrbState(state) {
+        if (!characterOrb) return;
         characterOrb.className = 'orb-sphere ' + state;
         if (state === 'speaking') {
             statusText.textContent = 'Nova говорит...';
         } else if (state === 'listening') {
             statusText.textContent = 'Слушаю вас (English)...';
         } else if (state === 'thinking') {
-            statusText.textContent = 'Groq генерирует ответ...';
+            statusText.textContent = 'Генерация ответа...';
         } else {
             statusText.textContent = 'Готов к разговору';
         }
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!textEl) return;
 
         synth.cancel();
-        const rawText = textEl.innerText.replace(/Nova — это ИИ.*/, '');
+        const rawText = textEl.innerText.replace(/Nova AI —.*/, '').replace(/\[Correction\].*/, '');
         const utterance = new SpeechSynthesisUtterance(rawText);
         if (selectedVoice) utterance.voice = selectedVoice;
         utterance.lang = 'en-US';
@@ -115,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         utterance.onend = () => {
             isSpeaking = false;
             setOrbState('idle');
-            // If live voice mode is on, start listening again automatically
             if (isLiveModeActive) {
                 setTimeout(startListening, 300);
             }
@@ -150,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onstart = () => {
             isListening = true;
-            voiceInputBtn.classList.add('active');
-            liveVoiceModeBtn.classList.add('active');
+            if (voiceInputBtn) voiceInputBtn.classList.add('active');
+            if (liveVoiceModeBtn) liveVoiceModeBtn.classList.add('active');
             setOrbState('listening');
         };
 
@@ -170,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopListening();
         };
     } else {
-        voiceInputBtn.title = 'Web Speech Recognition не поддерживается в этом браузере';
+        if (voiceInputBtn) voiceInputBtn.title = 'Web Speech Recognition не поддерживается в этом браузере';
     }
 
     function startListening() {
@@ -182,14 +183,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             recognition.start();
         } catch (e) {
-            // Already started
+            // Already active
         }
     }
 
     function stopListening() {
         isListening = false;
-        voiceInputBtn.classList.remove('active');
-        if (!isLiveModeActive) liveVoiceModeBtn.classList.remove('active');
+        if (voiceInputBtn) voiceInputBtn.classList.remove('active');
+        if (!isLiveModeActive && liveVoiceModeBtn) liveVoiceModeBtn.classList.remove('active');
         if (!isSpeaking) setOrbState('idle');
     }
 
@@ -203,8 +204,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (voiceInputBtn) voiceInputBtn.addEventListener('click', toggleListening);
+    if (characterOrb) characterOrb.addEventListener('click', toggleListening);
 
-    // Live Voice Mode (Violet Wave Pill in Screenshots 3 & 4)
+    // Live Voice Mode (Waveform Button)
     if (liveVoiceModeBtn) {
         liveVoiceModeBtn.addEventListener('click', () => {
             isLiveModeActive = !isLiveModeActive;
@@ -216,6 +218,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 stopListening();
                 if (synth) synth.cancel();
             }
+        });
+    }
+
+    if (drawerVoiceToggle) {
+        drawerVoiceToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeDrawer();
+            toggleListening();
         });
     }
 
@@ -292,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                 </div>
-                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+                <div class="ai-disclaimer">Nova AI — виртуальный тьютор английского языка.</div>
             `;
         }
 
@@ -307,11 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatMarkdown(text) {
         return text
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/\\[Correction\\]:(.*?)(?=\\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
-            .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-            .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
-            .replace(/\\n\\n/g, '</p><p>')
-            .replace(/\\n/g, '<br>');
+            .replace(/\[Correction\]:(.*?)(?=\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
     }
 
     // Save Settings

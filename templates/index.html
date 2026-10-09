@@ -1,29 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Nova Spark — AI English Tutor{% endblock %}
+{% block title %}Nova — AI English Tutor{% endblock %}
 {% block content %}
 <div class="app-container">
-    <!-- Top Navigation Bar (Screenshots 3 & 4) -->
+    <!-- Top Navigation Bar -->
     <header class="top-bar">
         <button id="open-drawer-btn" class="icon-btn" title="Меню">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
         <div class="top-title-group" id="header-title-btn">
-            <span class="top-title">Nova Spark</span>
-            <span class="beta-badge">БЕТА</span>
+            <span class="top-title">Nova English</span>
+            <span class="tag-badge">AI Tutor</span>
         </div>
 
         <button id="open-settings-btn" class="icon-btn" title="Настройки">
-            <!-- Sliders / Settings icon (matching Screenshot 3) -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
         </button>
     </header>
 
-    <!-- Main Scrollable Area -->
+    <!-- Main Scrollable Content Area -->
     <main class="content-area" id="content-area">
         <!-- Virtual Character Orb Hero Widget -->
         <section class="character-hero">
-            <div class="orb-container" id="character-orb-wrap" title="Нажмите, чтобы начать разговор">
+            <div class="orb-container" id="character-orb-wrap" title="Нажмите, чтобы включить голос">
                 <div class="orb-glow"></div>
                 <div class="orb-sphere" id="character-orb">
                     <div class="orb-inner"></div>
@@ -50,7 +49,7 @@
             <!-- Welcome message -->
             <div class="chat-bubble assistant">
                 <div class="bubble-assistant-content">
-                    <p>Привет, <strong>{{ user['username'] }}</strong>! 👋 Я <strong>Nova</strong> — твой виртуальный AI-тьютор английского языка на базе моделей <strong>Groq</strong>.</p>
+                    <p>Привет, <strong>{{ user['username'] }}</strong>! 👋 Я <strong>Nova</strong> — твой персональный AI-тьютор английского языка на базе моделей <strong>Groq</strong>.</p>
                     <p>Мы можем общаться голосом или текстом. Я помогу тебе свободно заговорить на английском, объясню правила и разберу любые ошибки в речи.</p>
                     {% if not settings['groq_api_key'] %}
                     <div class="correction-block" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
@@ -66,7 +65,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                 </div>
-                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+                <div class="ai-disclaimer">Nova AI — виртуальный тьютор английского языка.</div>
             </div>
 
             <!-- Historical messages from DB -->
@@ -84,38 +83,38 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                 </div>
-                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+                <div class="ai-disclaimer">Nova AI — виртуальный тьютор английского языка.</div>
                 {% endif %}
             </div>
             {% endfor %}
         </section>
     </main>
 
-    <!-- Floating Bottom Dock Bar (Screenshots 3 & 4) -->
+    <!-- Floating Bottom Dock Bar -->
     <footer class="bottom-dock">
         <form id="chat-form" class="floating-pill-bar">
             <!-- (+) Add Action Button -->
-            <button type="button" class="pill-add-btn" id="pill-add-btn" title="Прикрепить / Темы">
+            <button type="button" class="pill-add-btn" id="pill-add-btn" title="Темы">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
 
             <!-- Input Box -->
-            <input type="text" id="chat-input" class="pill-input" placeholder="Опишите задачу или начните говорить..." autocomplete="off">
+            <input type="text" id="chat-input" class="pill-input" placeholder="Напишите или скажите голосом..." autocomplete="off">
 
             <!-- Mic Input Button (Speech-to-Text) -->
-            <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод (нажмите и говорите)">
+            <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
 
-            <!-- Violet Live Audio Waveform Button (Screenshot 3 & 4) -->
-            <button type="button" class="voice-wave-pill" id="live-voice-mode-btn" title="Режим живого голосового разговора">
+            <!-- Live Voice Waveform Button -->
+            <button type="button" class="voice-wave-pill" id="live-voice-mode-btn" title="Живой голосовой диалог">
                 <span></span><span></span><span></span><span></span>
             </button>
         </form>
     </footer>
 
     <!-- ========================================================
-         DRAWER / SIDEBAR MENU (Screenshot 2 Exact Style)
+         DRAWER / SIDEBAR MENU
          ======================================================== -->
     <div class="drawer-backdrop" id="drawer-backdrop"></div>
     <aside class="drawer-panel" id="drawer-panel">
@@ -127,18 +126,13 @@
         </div>
 
         <nav class="drawer-menu">
-            <a href="#" class="drawer-item" id="new-chat-drawer-btn">
+            <a href="#" class="drawer-item active" id="new-chat-drawer-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                <span>Новый чат</span>
+                <span>Новый диалог</span>
             </a>
-            <a href="#" class="drawer-item" id="search-chats-drawer-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <span>Поиск по диалогам</span>
-            </a>
-            <a href="#" class="drawer-item active">
+            <a href="#" class="drawer-item" id="drawer-voice-toggle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>Spark Режим</span>
-                <span class="beta-badge" style="margin-left: auto;">БЕТА</span>
+                <span>Голосовой режим</span>
             </a>
             <a href="{{ url_for('standalone') }}" class="drawer-item" target="_blank">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -154,13 +148,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span>Грамматический тест</span>
             </a>
-            <a href="#" class="drawer-item topic-item" data-prompt="Let's simulate an IELTS Speaking Part 2 task card. Give me a topic and time me.">
+            <a href="#" class="drawer-item topic-item" data-prompt="Let's simulate an IELTS Speaking Part 2 interview. Give me a topic and time me.">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>IELTS / TOEFL Тренинг</span>
             </a>
         </nav>
 
-        <!-- User profile in drawer bottom (matching Screenshot 2) -->
+        <!-- User profile in drawer bottom -->
         <div class="drawer-profile">
             <div class="profile-info">
                 <div class="user-avatar-ring">
@@ -168,7 +162,7 @@
                 </div>
                 <div class="profile-meta">
                     <h4>{{ user['username'] }}</h4>
-                    <span>English Learner &bull; Pro</span>
+                    <span>English Learner</span>
                 </div>
             </div>
             <button class="icon-btn" id="drawer-settings-gear-btn" title="Настройки">
@@ -178,11 +172,9 @@
     </aside>
 
     <!-- ========================================================
-         SETTINGS SCREEN (Screenshot 1 Exact Inset Grouped Style)
+         SETTINGS SCREEN (Inset Grouped Style)
          ======================================================== -->
     <div class="settings-sheet" id="settings-sheet">
-        <div class="sheet-handle-bar"></div>
-
         <div class="sheet-header">
             <h2>Настройки</h2>
             <button class="icon-btn" id="close-settings-sheet-btn" title="Закрыть">
@@ -190,27 +182,9 @@
             </button>
         </div>
 
-        <!-- Top Limit Card (Screenshot 1) -->
-        <div class="inset-card" style="margin-bottom: 20px;">
-            <div class="inset-row" id="limits-row">
-                <div class="inset-row-left">
-                    <div class="inset-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div class="inset-row-text">
-                        <span class="inset-title">Лимиты на использование</span>
-                        <span class="inset-subtitle">Groq Cloud: Безлимитный доступ</span>
-                    </div>
-                </div>
-                <div class="inset-chevron">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-            </div>
-        </div>
-
         <form id="settings-form">
-            <!-- Group 1: НАСТРОЙКИ (Screenshot 1) -->
-            <div class="settings-section-title">Настройки</div>
+            <!-- Group 1: AI МОДЕЛЬ & GROQ -->
+            <div class="settings-section-title">Groq AI & Модель</div>
             <div class="inset-card">
                 <!-- Groq API Key Input -->
                 <div class="inset-control-wrap">
@@ -221,7 +195,7 @@
 
                 <!-- Model Picker -->
                 <div class="inset-control-wrap">
-                    <label class="inset-label" for="model_name">Модель ИИ</label>
+                    <label class="inset-label" for="model_name">Модель</label>
                     <select id="model_name" name="model_name" class="dark-select">
                         {% for m in models %}
                         <option value="{{ m.id }}" {% if settings['model_name'] == m.id %}selected{% endif %}>
@@ -235,7 +209,7 @@
                 <div class="inset-control-wrap">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="inset-title" style="font-size: 14px;">Автоматическая озвучка ответов</span>
-                        <input type="checkbox" id="auto_speak" name="auto_speak" style="width: 18px; height: 18px; accent-color: var(--accent-indigo);" {% if settings['auto_speak'] %}checked{% endif %}>
+                        <input type="checkbox" id="auto_speak" name="auto_speak" style="width: 20px; height: 20px; accent-color: var(--accent-indigo);" {% if settings['auto_speak'] %}checked{% endif %}>
                     </div>
                 </div>
 
@@ -269,8 +243,8 @@
                 </div>
             </div>
 
-            <!-- Group 3: ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ (Screenshot 1) -->
-            <div class="settings-section-title">Данные и конфиденциальность</div>
+            <!-- Group 3: ДАННЫЕ И АККАУНТ -->
+            <div class="settings-section-title">Данные и аккаунт</div>
             <div class="inset-card">
                 <div class="inset-row" id="clear-history-row">
                     <div class="inset-row-left">
@@ -279,7 +253,7 @@
                         </div>
                         <div class="inset-row-text">
                             <span class="inset-title">Очистить историю диалогов</span>
-                            <span class="inset-subtitle">Удалить все предыдущие сообщения</span>
+                            <span class="inset-subtitle">Удалить сообщения из истории</span>
                         </div>
                     </div>
                     <div class="inset-chevron">
@@ -303,8 +277,8 @@
                 </a>
             </div>
 
-            <div style="margin-top: 24px;">
-                <button type="submit" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: var(--accent-indigo); font-weight: 600; font-size: 15px; height: 46px;">
+            <div style="margin-top: 24px; padding-bottom: 20px;">
+                <button type="submit" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: var(--accent-indigo); font-weight: 600; font-size: 16px; height: 48px;">
                     Сохранить настройки
                 </button>
             </div>
