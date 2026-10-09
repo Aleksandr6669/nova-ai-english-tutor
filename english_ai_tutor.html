@@ -2,26 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nova Spark — AI English Tutor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Nova English — AI English Tutor</title>
     <style>
 /* ========================================================
-   GEMINI MOBILE / DARK INSET DESIGN SYSTEM
-   Matches official Google Gemini mobile dark interface
+   NOVA AI ENGLISH TUTOR — NATIVE MOBILE PWA DESIGN SYSTEM
+   Optimized for smartphones: 0 zoom, 0 lag, safe-area-inset
    ======================================================== */
 
 :root {
     --bg-black: #000000;
-    --bg-app: #09090b;
-    --bg-card: #18181b;
-    --bg-card-hover: #222226;
-    --bg-card-elevated: #27272a;
-    --bg-pill: #27272a;
+    --bg-surface: #121214;
+    --bg-card: #1c1c1f;
+    --bg-card-hover: #26262a;
+    --bg-card-elevated: #2a2a2e;
+    --bg-pill: #26262a;
     --bg-pill-hover: #323238;
     
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-card: rgba(255, 255, 255, 0.12);
-    --border-active: rgba(99, 102, 241, 0.5);
+    --border-focus: #6366f1;
     
     --text-primary: #ffffff;
     --text-secondary: #a1a1aa;
@@ -30,15 +33,16 @@
     
     --accent-blue: #3b82f6;
     --accent-indigo: #6366f1;
-    --accent-purple: #8b5cf6;
     --accent-cyan: #06b6d4;
+    --accent-emerald: #10b981;
+    --accent-rose: #f43f5e;
     --accent-voice-pill: #4338ca;
     --accent-voice-active: #6366f1;
     
     --radius-pill: 9999px;
-    --radius-card: 20px;
-    --radius-item: 14px;
-    --radius-sm: 10px;
+    --radius-card: 22px;
+    --radius-item: 16px;
+    --radius-sm: 12px;
     
     --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -51,58 +55,74 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
     background-color: var(--bg-black);
     color: var(--text-primary);
     font-family: var(--font-sans);
     line-height: 1.45;
-    height: 100vh;
+    height: 100%;
     height: 100dvh;
+    width: 100%;
     overflow: hidden;
-    display: flex;
-    justify-content: center;
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
 }
 
-/* Max mobile viewport layout or full-screen desktop container */
+/* Base Inputs: 16px font-size to prevent iOS Safari auto-zoom */
+input, textarea, select, button {
+    font-size: 16px !important;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* App Outer Shell: responsive for mobile and desktop */
 .app-container {
     width: 100%;
     max-width: 480px;
     height: 100%;
+    height: 100dvh;
     background-color: var(--bg-black);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    margin: 0 auto;
 }
 
 @media (min-width: 900px) {
     .app-container {
-        max-width: 860px;
+        max-width: 820px;
         border-left: 1px solid var(--border-subtle);
         border-right: 1px solid var(--border-subtle);
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
     }
 }
 
-/* ========================================================
-   TOP HEADER BAR (Screenshot 3 & 4)
-   ======================================================== */
+/* Top Bar */
 .top-bar {
-    height: 60px;
-    padding: 0 16px;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: 16px;
+    padding-right: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     z-index: 20;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
 }
 
 .icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--radius-pill);
     background: var(--bg-pill);
     border: none;
@@ -111,84 +131,70 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, transform 0.1s ease;
     flex-shrink: 0;
 }
 
-.icon-btn:hover {
-    background: var(--bg-pill-hover);
-    transform: scale(1.03);
-}
-
-.icon-btn:active {
-    transform: scale(0.96);
-}
-
-.icon-btn svg {
-    width: 20px;
-    height: 20px;
-}
+.icon-btn:hover { background: var(--bg-pill-hover); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn svg { width: 20px; height: 20px; }
 
 .top-title-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
+    user-select: none;
 }
 
 .top-title {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
 }
 
-.beta-badge {
-    font-size: 10px;
-    font-weight: 700;
+.tag-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
     text-transform: uppercase;
-    color: var(--text-muted);
     letter-spacing: 0.05em;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 2px 5px;
-    border-radius: 4px;
 }
 
-/* ========================================================
-   MAIN SCROLLABLE CONTENT (Character + Chat)
-   ======================================================== */
+/* Main Scrollable Area */
 .content-area {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px 16px 100px 16px;
+    padding: 16px 16px 110px 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Custom Scrollbar */
-.content-area::-webkit-scrollbar {
-    width: 4px;
-}
-.content-area::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-}
+.content-area::-webkit-scrollbar { width: 4px; }
+.content-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 
-/* Character Orb Hero Widget */
+/* Character Orb Hero */
 .character-hero {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 16px 0 10px 0;
+    padding: 18px 0 10px 0;
+    flex-shrink: 0;
 }
 
 .orb-container {
     position: relative;
-    width: 130px;
-    height: 130px;
+    width: 110px;
+    height: 110px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -197,276 +203,222 @@ body {
 
 .orb-glow {
     position: absolute;
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
-    filter: blur(15px);
-    transition: all 0.5s ease;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(6, 182, 212, 0.15) 50%, transparent 70%);
+    filter: blur(18px);
+    animation: glowPulse 4s infinite ease-in-out;
 }
 
 .orb-sphere {
-    position: relative;
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #818cf8 0%, #4f46e5 50%, #1e1b4b 100%);
-    box-shadow: 0 0 25px rgba(99, 102, 241, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6);
+    background: radial-gradient(circle at 35% 35%, #818cf8, #4f46e5 50%, #1e1b4b 100%);
+    box-shadow: 0 0 35px rgba(99, 102, 241, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.4);
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: orbFloat 4s infinite ease-in-out;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: orbFloat 5s infinite ease-in-out;
 }
 
 .orb-inner {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 0 12px #ffffff;
+    background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0.3) 80%, transparent 100%);
     filter: blur(1px);
-    animation: corePulse 2s infinite ease-in-out;
+    animation: innerPulse 2.5s infinite ease-in-out;
 }
 
 .orb-ring {
     position: absolute;
-    width: 106px;
-    height: 106px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
-    border: 1.5px dashed rgba(165, 180, 252, 0.35);
-    animation: ringRotate 14s linear infinite;
-}
-
-/* Character Orb Dynamic States */
-.orb-sphere.speaking {
-    background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 50%, #082f49 100%);
-    box-shadow: 0 0 35px rgba(56, 189, 248, 0.7), inset 0 0 15px #ffffff;
-    animation: orbPulseSpeaking 0.6s infinite alternate ease-in-out;
+    border: 1.5px solid rgba(165, 180, 252, 0.3);
+    border-top-color: rgba(255, 255, 255, 0.8);
+    animation: ringSpin 6s linear infinite;
 }
 
 .orb-sphere.listening {
-    background: radial-gradient(circle at 35% 35%, #f43f5e 0%, #e11d48 50%, #4c0519 100%);
-    box-shadow: 0 0 35px rgba(244, 63, 94, 0.7);
-    animation: orbPulseListening 0.8s infinite alternate ease-in-out;
+    transform: scale(1.1);
+    background: radial-gradient(circle at 35% 35%, #f43f5e, #e11d48 50%, #881337 100%);
+    box-shadow: 0 0 45px rgba(244, 63, 94, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.6);
+    animation: listeningPulse 1.2s infinite ease-in-out;
 }
 
 .orb-sphere.thinking {
-    background: radial-gradient(circle at 35% 35%, #c084fc 0%, #9333ea 50%, #3b0764 100%);
-    box-shadow: 0 0 35px rgba(192, 132, 252, 0.7);
-    animation: orbRotateThinking 1.5s infinite linear;
+    animation: thinkingSpin 1.4s infinite linear;
+    background: radial-gradient(circle at 35% 35%, #06b6d4, #0284c7 50%, #082f49 100%);
+    box-shadow: 0 0 40px rgba(6, 182, 212, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.orb-sphere.speaking {
+    animation: speakingWave 0.8s infinite alternate ease-in-out;
+    background: radial-gradient(circle at 35% 35%, #10b981, #059669 50%, #064e3b 100%);
+    box-shadow: 0 0 45px rgba(16, 185, 129, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.6);
 }
 
 .character-tag {
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 10px;
-    padding: 5px 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
     border-radius: var(--radius-pill);
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
+    border: 1px solid var(--border-subtle);
 }
 
 .character-tag .dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: var(--accent-indigo);
-    box-shadow: 0 0 6px var(--accent-indigo);
+    background: var(--accent-emerald);
+    box-shadow: 0 0 8px var(--accent-emerald);
 }
 
-/* Practice Topic Pills Row */
+@keyframes orbFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+@keyframes glowPulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.15); opacity: 0.9; } }
+@keyframes ringSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes innerPulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } }
+@keyframes listeningPulse { 0%, 100% { transform: scale(1.08); } 50% { transform: scale(1.18); } }
+@keyframes thinkingSpin { 0% { transform: rotate(0deg) scale(1.05); } 100% { transform: rotate(360deg) scale(1.05); } }
+@keyframes speakingWave { 0% { transform: scale(1.02); filter: brightness(1); } 100% { transform: scale(1.14); filter: brightness(1.2); } }
+
+/* Topics Scroll */
 .topics-scroll {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding: 4px 0 8px 0;
-    scrollbar-width: none;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
 }
-.topics-scroll::-webkit-scrollbar {
-    display: none;
-}
+.topics-scroll::-webkit-scrollbar { display: none; }
 
 .topic-chip {
-    flex-shrink: 0;
     padding: 8px 14px;
+    border-radius: var(--radius-pill);
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-pill);
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 13px !important;
     font-weight: 500;
+    white-space: nowrap;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
-
 .topic-chip:hover, .topic-chip:active {
     background: var(--bg-card-hover);
     color: var(--text-primary);
-    border-color: var(--border-card);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================================
-   CHAT MESSAGES STREAM (Screenshot 4 Style)
-   ======================================================== */
-.messages-list {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
+/* Chat Messages */
+.messages-list { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.chat-bubble { display: flex; flex-direction: column; width: 100%; animation: fadeIn 0.25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-.chat-bubble {
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
-    animation: fadeInUp 0.25s ease-out;
-}
-
-.chat-bubble.user {
-    align-self: flex-end;
-    max-width: 86%;
-}
-
-.chat-bubble.assistant {
-    align-self: flex-start;
-    width: 100%;
-}
-
+.chat-bubble.user { align-items: flex-end; }
 .bubble-user-content {
     background: var(--bg-card);
-    border: 1px solid var(--border-card);
+    color: var(--text-primary);
+    padding: 12px 18px;
     border-radius: 20px 20px 4px 20px;
-    padding: 12px 16px;
-    color: var(--text-primary);
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.45;
+    max-width: 86%;
     word-break: break-word;
+    border: 1px solid var(--border-subtle);
 }
 
+.chat-bubble.assistant { align-items: flex-start; }
 .bubble-assistant-content {
+    background: transparent;
     color: var(--text-primary);
-    font-size: 15px;
+    padding: 4px 4px;
+    font-size: 15.5px;
     line-height: 1.55;
+    width: 100%;
     word-break: break-word;
-    padding: 2px 4px;
 }
+.bubble-assistant-content p { margin-bottom: 10px; }
+.bubble-assistant-content p:last-child { margin-bottom: 0; }
 
-.bubble-assistant-content p {
-    margin-bottom: 10px;
-}
-
-.bubble-assistant-content p:last-child {
-    margin-bottom: 0;
-}
-
-.bubble-assistant-content ol, .bubble-assistant-content ul {
-    margin: 8px 0 12px 20px;
-}
-
-.bubble-assistant-content li {
-    margin-bottom: 6px;
-}
-
-.bubble-assistant-content strong {
-    color: #ffffff;
-    font-weight: 600;
-}
-
-/* Grammar Correction Card */
 .correction-block {
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    border-left: 3px solid #10b981;
-    border-radius: 0 12px 12px 0;
+    background: rgba(99, 102, 241, 0.08);
+    border-left: 3px solid var(--accent-indigo);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     padding: 10px 14px;
     margin: 10px 0;
     font-size: 14px;
+    line-height: 1.45;
 }
+.correction-block strong { color: #a5b4fc; display: block; margin-bottom: 2px; }
 
-.correction-block strong {
-    color: #34d399;
-}
-
-/* Assistant Message Action Buttons Row (Screenshot 4) */
-.msg-actions-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    padding-left: 2px;
-}
-
+.msg-actions-row { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-left: 4px; }
 .action-icon-btn {
-    background: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-pill);
+    background: transparent;
     border: none;
     color: var(--text-muted);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
+.action-icon-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+.action-icon-btn svg { width: 16px; height: 16px; }
+.ai-disclaimer { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; padding-left: 6px; }
 
-.action-icon-btn:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.action-icon-btn svg {
-    width: 17px;
-    height: 17px;
-}
-
-.ai-disclaimer {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 6px;
-    padding-left: 4px;
-}
-
-/* ========================================================
-   FLOATING BOTTOM INPUT BAR (Screenshot 3 & 4)
-   ======================================================== */
+/* Floating Bottom Dock */
 .bottom-dock {
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 0;
-    width: 100%;
-    padding: 12px 16px 20px 16px;
-    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 30%, #000000 100%);
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.98) 60%, rgba(0, 0, 0, 0) 100%);
+    z-index: 30;
     pointer-events: none;
-    z-index: 25;
 }
+@media (min-width: 900px) { .bottom-dock { max-width: 820px; } }
 
 .floating-pill-bar {
     pointer-events: auto;
-    background: rgba(30, 30, 34, 0.88);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    height: 54px;
+    background: var(--bg-pill);
     border-radius: var(--radius-pill);
-    padding: 6px 8px 6px 14px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    transition: border-color 0.2s ease;
+    padding: 4px 6px 4px 8px;
+    gap: 8px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
-
 .floating-pill-bar:focus-within {
-    border-color: rgba(99, 102, 241, 0.6);
-    background: rgba(36, 36, 42, 0.95);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: var(--bg-pill-hover);
 }
 
 .pill-add-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-pill);
     background: none;
     border: none;
@@ -476,31 +428,52 @@ body {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: color 0.2s ease;
 }
-
-.pill-add-btn:hover {
-    color: var(--text-primary);
-}
-
-.pill-add-btn svg {
-    width: 22px;
-    height: 22px;
-}
+.pill-add-btn svg { width: 20px; height: 20px; }
 
 .pill-input {
     flex: 1;
-    background: none;
+    background: transparent;
     border: none;
     outline: none;
     color: var(--text-primary);
-    font-size: 15px;
-    font-family: inherit;
+    font-size: 16px !important;
     padding: 6px 0;
 }
+.pill-input::placeholder { color: var(--text-muted); }
 
-.pill-input::placeholder {
-    color: var(--text-muted);
+.pill-lang-btn {
+    height: 28px;
+    padding: 0 9px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px !important;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.pill-lang-btn:hover, .pill-lang-btn:active {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+.pill-lang-btn.ru {
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(96, 165, 250, 0.1);
+}
+.pill-lang-btn.en {
+    color: #a78bfa;
+    border-color: rgba(167, 139, 250, 0.4);
+    background: rgba(167, 139, 250, 0.1);
 }
 
 .pill-mic-btn {
@@ -515,31 +488,17 @@ body {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.2s ease;
 }
+.pill-mic-btn.active { color: #ef4444; animation: micPulse 1.2s infinite ease-in-out; }
+.pill-mic-btn svg { width: 20px; height: 20px; }
 
-.pill-mic-btn:hover {
-    color: var(--text-primary);
-}
-
-.pill-mic-btn.active {
-    color: #ef4444;
-    animation: micPulse 1.2s infinite ease-in-out;
-}
-
-.pill-mic-btn svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Violet Sound Wave Live Voice Button (Screenshot 3 & 4) */
 .voice-wave-pill {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 3px;
     width: 44px;
-    height: 36px;
+    height: 40px;
     border-radius: var(--radius-pill);
     background: var(--accent-voice-pill);
     border: none;
@@ -547,394 +506,223 @@ body {
     flex-shrink: 0;
     transition: all 0.2s ease;
 }
+.voice-wave-pill:active { transform: scale(0.92); }
+.voice-wave-pill span { width: 3px; height: 12px; background: #ffffff; border-radius: 2px; }
+.voice-wave-pill span:nth-child(2) { height: 18px; }
+.voice-wave-pill span:nth-child(3) { height: 15px; }
+.voice-wave-pill span:nth-child(4) { height: 9px; }
 
-.voice-wave-pill:hover {
-    background: var(--accent-voice-active);
-    transform: scale(1.05);
-}
-
-.voice-wave-pill span {
-    width: 2.5px;
-    height: 14px;
-    background-color: #ffffff;
-    border-radius: 2px;
-    transition: height 0.1s ease;
-}
-
-.voice-wave-pill span:nth-child(1) { height: 8px; }
-.voice-wave-pill span:nth-child(2) { height: 16px; }
-.voice-wave-pill span:nth-child(3) { height: 10px; }
-.voice-wave-pill span:nth-child(4) { height: 14px; }
-
-.voice-wave-pill.active span {
-    animation: soundWaveAnim 0.6s infinite ease-in-out alternate;
-}
+.voice-wave-pill.active { background: var(--accent-voice-active); box-shadow: 0 0 16px rgba(99, 102, 241, 0.6); }
+.voice-wave-pill.active span { animation: waveBounce 0.8s infinite alternate ease-in-out; }
 .voice-wave-pill.active span:nth-child(2) { animation-delay: 0.15s; }
 .voice-wave-pill.active span:nth-child(3) { animation-delay: 0.3s; }
 .voice-wave-pill.active span:nth-child(4) { animation-delay: 0.45s; }
 
-/* ========================================================
-   SETTINGS SCREEN (Screenshot 1 Exact Inset Grouped Style)
-   ======================================================== */
-.settings-sheet {
+@keyframes waveBounce { 0% { height: 6px; } 100% { height: 24px; } }
+@keyframes micPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); } }
+
+/* Drawer Menu */
+.drawer-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--bg-black);
-    z-index: 100;
-    display: none;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 0 16px 36px 16px;
-    max-width: 480px;
-    margin: 0 auto;
-    right: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
+.drawer-backdrop.active { opacity: 1; pointer-events: auto; }
 
-.settings-sheet.active {
+.drawer-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    max-width: 85%;
+    height: 100%;
+    height: 100dvh;
+    background: var(--bg-surface);
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     display: flex;
-    animation: sheetSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-right: 1px solid var(--border-subtle);
 }
+.drawer-panel.open { transform: translateX(0); }
 
-.sheet-handle-bar {
-    width: 36px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    margin: 10px auto 4px auto;
-}
-
-.sheet-header {
+.drawer-top {
+    padding: 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 0 20px 0;
+    border-bottom: 1px solid var(--border-subtle);
 }
+.drawer-brand { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
 
-.sheet-header h2 {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-/* Inset Grouped Cards (Screenshot 1) */
-.settings-section-title {
-    font-size: 13px;
+.drawer-menu { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+.drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-item);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 15px;
     font-weight: 500;
-    color: var(--text-muted);
-    margin: 20px 0 8px 12px;
+    transition: all 0.2s ease;
 }
+.drawer-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+.drawer-item.active { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+.drawer-item svg { width: 20px; height: 20px; color: inherit; flex-shrink: 0; }
+.drawer-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.06em; padding: 16px 14px 6px 14px; }
+
+.drawer-profile {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.2);
+}
+.profile-info { display: flex; align-items: center; gap: 12px; }
+.user-avatar-ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.profile-meta h4 { font-size: 14.5px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+.profile-meta span { font-size: 12px; color: var(--text-muted); }
+
+/* Settings Sheet */
+.settings-sheet {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-black);
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.settings-sheet.active { transform: translateY(0); }
+
+.sheet-header {
+    height: 56px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.sheet-header h2 { font-size: 18px; font-weight: 700; }
+
+.settings-sheet form { padding: 16px 16px 40px 16px; max-width: 540px; width: 100%; margin: 0 auto; }
+.settings-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; margin: 22px 4px 8px 4px; }
 
 .inset-card {
     background: var(--bg-card);
     border-radius: var(--radius-card);
+    border: 1px solid var(--border-card);
     overflow: hidden;
-    border: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
 }
+
+.inset-control-wrap {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.inset-control-wrap:last-child { border-bottom: none; }
+.inset-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+
+.dark-input, .dark-select {
+    width: 100%;
+    background: var(--bg-pill);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-item);
+    color: var(--text-primary);
+    padding: 11px 14px;
+    font-size: 16px !important;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+.dark-input:focus, .dark-select:focus { border-color: var(--border-focus); }
 
 .inset-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-subtle);
     cursor: pointer;
-    transition: background 0.15s ease;
     text-decoration: none;
-    color: var(--text-primary);
+    color: inherit;
+    transition: background 0.2s ease;
 }
+.inset-row:last-child { border-bottom: none; }
+.inset-row:hover { background: var(--bg-card-hover); }
 
-.inset-row:last-child {
-    border-bottom: none;
-}
-
-.inset-row:hover {
-    background: var(--bg-card-hover);
-}
-
-.inset-row-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
+.inset-row-left { display: flex; align-items: center; gap: 12px; }
 .inset-icon {
-    width: 22px;
-    height: 22px;
-    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
-
-.inset-row-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.inset-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.inset-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 1px;
-}
-
-.inset-chevron {
-    color: var(--text-dim);
-}
-
-.inset-chevron svg {
-    width: 16px;
-    height: 16px;
-}
-
-/* Inset Input & Select Controls */
-.inset-control-wrap {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.inset-control-wrap:last-child {
-    border-bottom: none;
-}
-
-.inset-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-}
-
-.dark-input, .dark-select {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-family: inherit;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color 0.2s ease;
-}
-
-.dark-input:focus, .dark-select:focus {
-    border-color: var(--accent-indigo);
-}
-
-.dark-select option {
-    background: #18181b;
-    color: #ffffff;
-}
-
-/* ========================================================
-   DRAWER / SIDEBAR MENU (Screenshot 2 Exact Style)
-   ======================================================== */
-.drawer-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-    display: none;
-}
-
-.drawer-backdrop.active {
-    display: block;
-}
-
-.drawer-panel {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 82%;
-    max-width: 320px;
-    height: 100%;
-    background: var(--bg-black);
-    border-right: 1px solid var(--border-subtle);
-    z-index: 101;
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-}
-
-.drawer-panel.open {
-    transform: translateX(0);
-}
-
-.drawer-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.drawer-brand {
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.drawer-menu {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.drawer-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 14px;
-    border-radius: var(--radius-item);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.15s ease;
-}
-
-.drawer-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.drawer-item.active {
-    background: var(--bg-card);
-}
-
-.drawer-item svg {
-    width: 18px;
-    height: 18px;
-    color: var(--text-secondary);
-}
-
-.drawer-section-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-dim);
-    margin: 16px 0 6px 14px;
-}
-
-/* User Profile Row at Drawer Bottom (Screenshot 2) */
-.drawer-profile {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 10px;
-    margin-top: auto;
-    border-top: 1px solid var(--border-subtle);
-}
-
-.profile-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.user-avatar-ring {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid var(--accent-blue);
-    background: #27272a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.profile-meta h4 {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.profile-meta span {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-/* ========================================================
-   ANIMATIONS
-   ======================================================== */
-@keyframes orbFloat {
-    0%, 100% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-6px) scale(1.02); }
-}
-
-@keyframes corePulse {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.25); opacity: 1; }
-}
-
-@keyframes ringRotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes orbPulseSpeaking {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.08); }
-}
-
-@keyframes orbPulseListening {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.05); }
-}
-
-@keyframes orbRotateThinking {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes soundWaveAnim {
-    0% { height: 6px; }
-    100% { height: 22px; }
-}
-
-@keyframes micPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes sheetSlideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.inset-icon svg { width: 18px; height: 18px; }
+.inset-row-text { display: flex; flex-direction: column; }
+.inset-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.inset-subtitle { font-size: 12px; color: var(--text-muted); }
+.inset-chevron svg { width: 16px; height: 16px; color: var(--text-dim); }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Top Bar (Screenshots 3 & 4) -->
+        <!-- Top Bar -->
         <header class="top-bar">
             <button id="open-drawer-btn" class="icon-btn" title="Меню">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
 
             <div class="top-title-group" id="header-title-btn">
-                <span class="top-title">Nova Spark</span>
-                <span class="beta-badge">БЕТА</span>
+                <span class="top-title">Nova English</span>
+                <span class="tag-badge">AI Tutor</span>
             </div>
 
             <button id="open-settings-btn" class="icon-btn" title="Настройки">
@@ -946,7 +734,7 @@ body {
         <main class="content-area" id="content-area">
             <!-- Virtual Character Orb Hero Widget -->
             <section class="character-hero">
-                <div class="orb-container" id="character-orb-wrap" title="Нажмите, чтобы начать разговор">
+                <div class="orb-container" id="character-orb-wrap" title="Нажмите, чтобы включить голос">
                     <div class="orb-glow"></div>
                     <div class="orb-sphere" id="character-orb">
                         <div class="orb-inner"></div>
@@ -961,21 +749,21 @@ body {
 
             <!-- Quick Topics Carousel -->
             <section class="topics-scroll">
-                <button class="topic-chip" data-prompt="Hi Nova! Let's have a friendly spoken conversation in English to practice my everyday speaking skills.">💬 Free Talk</button>
-                <button class="topic-chip" data-prompt="Let's roleplay: You are a barista in London, and I am a customer ordering coffee and snacks.">☕ Coffee Shop</button>
-                <button class="topic-chip" data-prompt="Can you explain when to use Present Perfect vs Past Simple with real-life examples?">📚 Grammar Tip</button>
-                <button class="topic-chip" data-prompt="Teach me 3 natural modern English idioms with meanings and sample dialogs.">🎯 Idioms</button>
-                <button class="topic-chip" data-prompt="I have a job interview in English. Ask me 3 typical behavioral questions and review my answers.">💼 Job Interview</button>
+                <button class="topic-chip" data-prompt="Привет Nova! Давай поговорим на английском на свободную тему, помоги мне попрактиковаться.">💬 Free Talk</button>
+                <button class="topic-chip" data-prompt="Как правильно заказать кофе и завтрак в Лондоне? Давай разыграем диалог.">☕ Coffee Shop</button>
+                <button class="topic-chip" data-prompt="Объясни простыми словами разницу между Present Perfect и Past Simple с жизненными примерами.">📚 Grammar Tip</button>
+                <button class="topic-chip" data-prompt="Научи меня 3 классным современным идиомам с переводом и примерами диалогов.">🎯 Idioms</button>
+                <button class="topic-chip" data-prompt="Подготовь меня к собеседованию на английском. Задай 3 типичных вопроса и разбери мои ответы.">💼 Job Interview</button>
             </section>
 
             <!-- Messages Stream -->
             <section class="messages-list" id="chat-messages">
                 <div class="chat-bubble assistant">
                     <div class="bubble-assistant-content">
-                        <p>Привет! 👋 Я <strong>Nova</strong> — твой персональный AI-тьютор английского языка на базе моделей <strong>Groq</strong>.</p>
-                        <p>Мы можем общаться голосом или текстом. Я помогу тебе свободно заговорить на английском, объясню правила и разберу любые ошибки в речи.</p>
-                        <div class="correction-block" id="api-banner" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
-                            <strong style="color: #fbbf24;">Подсказка:</strong> Для общения укажи свой бесплатный <strong>Groq API ключ</strong> в <a href="#" id="link-open-settings" style="color: #60a5fa; text-decoration: underline;">Настройках</a>.
+                        <p>Привет! 👋 Я <strong>Nova</strong> — твой персональный AI-тьютор английского языка на базе моделей <strong>Groq Cloud</strong>.</p>
+                        <p>Я свободно понимаю и русский, и английский язык. Ты можешь писать или говорить со мной на любом языке — я помогу заговорить на английском, объясню правила и разберу любые ошибки в речи.</p>
+                        <div id="api-banner" class="correction-block" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
+                            <strong style="color: #fbbf24;">Шаг 1:</strong> Введите ваш бесплатный Groq API ключ в <a href="#" id="link-open-settings" style="color: #60a5fa; text-decoration: underline;">Настройках</a>.
                         </div>
                     </div>
                     <div class="msg-actions-row">
@@ -986,19 +774,23 @@ body {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
                     </div>
-                    <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+                    <div class="ai-disclaimer">Nova AI — виртуальный тьютор английского языка.</div>
                 </div>
             </section>
         </main>
 
-        <!-- Floating Bottom Dock Bar (Screenshots 3 & 4) -->
+        <!-- Floating Bottom Dock Bar -->
         <footer class="bottom-dock">
             <form id="chat-form" class="floating-pill-bar">
                 <button type="button" class="pill-add-btn" id="pill-add-btn" title="Темы">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
 
-                <input type="text" id="chat-input" class="pill-input" placeholder="Опишите задачу или начните говорить..." autocomplete="off">
+                <input type="text" id="chat-input" class="pill-input" placeholder="Напишите на русском или английском..." autocomplete="off">
+
+                <button type="button" class="pill-lang-btn en" id="voice-lang-btn" title="Язык микрофона: нажмите для переключения EN / RU">
+                    <span id="voice-lang-label">EN</span>
+                </button>
 
                 <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -1010,7 +802,7 @@ body {
             </form>
         </footer>
 
-        <!-- Drawer Menu (Screenshot 2) -->
+        <!-- Drawer Menu -->
         <div class="drawer-backdrop" id="drawer-backdrop"></div>
         <aside class="drawer-panel" id="drawer-panel">
             <div class="drawer-top">
@@ -1021,26 +813,25 @@ body {
             </div>
 
             <nav class="drawer-menu">
-                <a href="#" class="drawer-item" id="new-chat-drawer-btn">
+                <a href="#" class="drawer-item active" id="new-chat-drawer-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     <span>Новый чат</span>
                 </a>
-                <a href="#" class="drawer-item active">
+                <a href="#" class="drawer-item" id="drawer-voice-toggle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span>Spark Режим</span>
-                    <span class="beta-badge" style="margin-left: auto;">БЕТА</span>
+                    <span>Голосовой режим</span>
                 </a>
 
                 <div class="drawer-section-title">ПРАКТИКА ЯЗЫКА</div>
-                <a href="#" class="drawer-item topic-item" data-prompt="Let's practice conversational fluency on travel and culture.">
+                <a href="#" class="drawer-item topic-item" data-prompt="Давай попрактикуем свободный разговор на английском на тему путешествий и культур.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                     <span>Разговорная речь</span>
                 </a>
-                <a href="#" class="drawer-item topic-item" data-prompt="Give me a comprehensive grammar quiz on conditional sentences.">
+                <a href="#" class="drawer-item topic-item" data-prompt="Проведи для меня тест по грамматике: условные предложения (Conditionals). Объясняй ошибки на русском.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     <span>Грамматический тест</span>
                 </a>
-                <a href="#" class="drawer-item topic-item" data-prompt="Let's simulate an IELTS Speaking Part 2 interview card.">
+                <a href="#" class="drawer-item topic-item" data-prompt="Давай проведем симуляцию IELTS Speaking Part 2. Дай мне тему карточки.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     <span>IELTS / TOEFL Тренинг</span>
                 </a>
@@ -1048,10 +839,10 @@ body {
 
             <div class="drawer-profile">
                 <div class="profile-info">
-                    <div class="user-avatar-ring" id="drawer-avatar-text">A</div>
+                    <div class="user-avatar-ring">N</div>
                     <div class="profile-meta">
-                        <h4 id="drawer-user-name">Александр Рыженков</h4>
-                        <span>English Learner &bull; Pro</span>
+                        <h4>Гость</h4>
+                        <span>Автономный режим</span>
                     </div>
                 </div>
                 <button class="icon-btn" id="drawer-settings-gear-btn" title="Настройки">
@@ -1060,10 +851,8 @@ body {
             </div>
         </aside>
 
-        <!-- Settings Screen (Screenshot 1 Inset Style) -->
+        <!-- Settings Screen -->
         <div class="settings-sheet" id="settings-sheet">
-            <div class="sheet-handle-bar"></div>
-
             <div class="sheet-header">
                 <h2>Настройки</h2>
                 <button class="icon-btn" id="close-settings-sheet-btn" title="Закрыть">
@@ -1071,38 +860,21 @@ body {
                 </button>
             </div>
 
-            <div class="inset-card" style="margin-bottom: 20px;">
-                <div class="inset-row">
-                    <div class="inset-row-left">
-                        <div class="inset-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <div class="inset-row-text">
-                            <span class="inset-title">Лимиты на использование</span>
-                            <span class="inset-subtitle">Groq Cloud: Безлимитный доступ</span>
-                        </div>
-                    </div>
-                    <div class="inset-chevron">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                </div>
-            </div>
-
             <form id="settings-form">
-                <div class="settings-section-title">Настройки</div>
+                <div class="settings-section-title">Groq AI & Модель</div>
                 <div class="inset-card">
                     <div class="inset-control-wrap">
-                        <label class="inset-label" for="groq_api_key">Groq API Ключ</label>
-                        <input type="password" id="groq_api_key" class="dark-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
-                        <span style="font-size: 11px; color: var(--text-dim); display: block; margin-top: 4px;">Получить: <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-blue);">console.groq.com</a></span>
+                        <label class="inset-label" for="apiKey">Groq API Ключ</label>
+                        <input type="password" id="apiKey" class="dark-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
+                        <span style="font-size: 11px; color: var(--text-dim); display: block; margin-top: 4px;">Ключ можно получить бесплатно на <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-blue);">console.groq.com</a></span>
                     </div>
 
                     <div class="inset-control-wrap">
-                        <label class="inset-label" for="model_name">Модель ИИ</label>
-                        <select id="model_name" class="dark-select">
-                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Рекомендуется)</option>
-                            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Быстрая)</option>
-                            <option value="mixtral-8x7b-32768">Mixtral 8x7B (Высокий контекст)</option>
+                        <label class="inset-label" for="model">Модель</label>
+                        <select id="model" class="dark-select">
+                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+                            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+                            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
                             <option value="gemma2-9b-it">Gemma 2 9B IT</option>
                         </select>
                     </div>
@@ -1110,21 +882,21 @@ body {
                     <div class="inset-control-wrap">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span class="inset-title" style="font-size: 14px;">Автоматическая озвучка ответов</span>
-                            <input type="checkbox" id="auto_speak" checked style="width: 18px; height: 18px; accent-color: var(--accent-indigo);">
+                            <input type="checkbox" id="autoSpeak" style="width: 20px; height: 20px; accent-color: var(--accent-indigo);" checked>
                         </div>
                     </div>
 
                     <div class="inset-control-wrap">
                         <label class="inset-label">Скорость речи: <span id="rate-val">1.0x</span></label>
-                        <input type="range" id="voice_rate" min="0.75" max="1.25" step="0.05" value="1.0" style="width: 100%; accent-color: var(--accent-indigo);">
+                        <input type="range" id="voiceRate" min="0.75" max="1.25" step="0.05" value="1.0" style="width: 100%; accent-color: var(--accent-indigo);">
                     </div>
                 </div>
 
                 <div class="settings-section-title">Обучение английскому</div>
                 <div class="inset-card">
                     <div class="inset-control-wrap">
-                        <label class="inset-label" for="english_level">Уровень знания языка (CEFR)</label>
-                        <select id="english_level" class="dark-select">
+                        <label class="inset-label" for="level">Уровень знания языка (CEFR)</label>
+                        <select id="level" class="dark-select">
                             <option value="beginner">A1–A2 (Beginner / Начальный)</option>
                             <option value="intermediate" selected>B1–B2 (Intermediate / Средний)</option>
                             <option value="advanced">C1–C2 (Advanced / Продвинутый)</option>
@@ -1132,17 +904,17 @@ body {
                     </div>
 
                     <div class="inset-control-wrap">
-                        <label class="inset-label" for="tutor_style">Стиль общения тьютора</label>
-                        <select id="tutor_style" class="dark-select">
-                            <option value="friendly" selected>Разговорный (Casual)</option>
+                        <label class="inset-label" for="style">Стиль общения тьютора</label>
+                        <select id="style" class="dark-select">
+                            <option value="friendly" selected>Дружелюбный разговорный (Casual)</option>
                             <option value="strict">Строгий фокус на грамматику</option>
                             <option value="business">Деловой английский (Business)</option>
-                            <option value="exam">Подготовка к IELTS/TOEFL</option>
+                            <option value="exam">Подготовка к экзаменам (IELTS/TOEFL)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="settings-section-title">Данные и конфиденциальность</div>
+                <div class="settings-section-title">Данные</div>
                 <div class="inset-card">
                     <div class="inset-row" id="clear-history-row">
                         <div class="inset-row-left">
@@ -1151,17 +923,14 @@ body {
                             </div>
                             <div class="inset-row-text">
                                 <span class="inset-title">Очистить историю диалогов</span>
-                                <span class="inset-subtitle">Удалить сообщения из локальной памяти</span>
+                                <span class="inset-subtitle">Удалить сообщения из памяти браузера</span>
                             </div>
-                        </div>
-                        <div class="inset-chevron">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 24px;">
-                    <button type="submit" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: var(--accent-indigo); font-weight: 600; font-size: 15px; height: 46px;">
+                <div style="margin-top: 24px; padding-bottom: 20px;">
+                    <button type="submit" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: var(--accent-indigo); font-weight: 600; font-size: 16px; height: 48px;">
                         Сохранить настройки
                     </button>
                 </div>
@@ -1171,7 +940,7 @@ body {
 
     <script>
         const storage = {
-            get: (k, d) => localStorage.getItem('nova_' + k) || d,
+            get: (k, d = null) => localStorage.getItem('nova_' + k) || d,
             set: (k, v) => localStorage.setItem('nova_' + k, v)
         };
 
@@ -1184,6 +953,7 @@ body {
         const closeSettingsSheetBtn = document.getElementById('close-settings-sheet-btn');
         const settingsSheet = document.getElementById('settings-sheet');
         const linkOpenSettings = document.getElementById('link-open-settings');
+        const drawerVoiceToggle = document.getElementById('drawer-voice-toggle');
 
         const chatForm = document.getElementById('chat-form');
         const chatInput = document.getElementById('chat-input');
@@ -1193,16 +963,18 @@ body {
         const liveVoiceModeBtn = document.getElementById('live-voice-mode-btn');
         const characterOrb = document.getElementById('character-orb');
         const statusText = document.getElementById('status-text');
+
         const settingsForm = document.getElementById('settings-form');
-        const apiKeyInput = document.getElementById('groq_api_key');
-        const modelSelect = document.getElementById('model_name');
-        const levelSelect = document.getElementById('english_level');
-        const styleSelect = document.getElementById('tutor_style');
-        const autoSpeakCheck = document.getElementById('auto_speak');
-        const voiceRateInput = document.getElementById('voice_rate');
+        const apiKeyInput = document.getElementById('apiKey');
+        const modelSelect = document.getElementById('model');
+        const levelSelect = document.getElementById('level');
+        const styleSelect = document.getElementById('style');
+        const autoSpeakCheck = document.getElementById('autoSpeak');
+        const voiceRateInput = document.getElementById('voiceRate');
         const rateVal = document.getElementById('rate-val');
-        const clearHistoryRow = document.getElementById('clear-history-row');
         const apiBanner = document.getElementById('api-banner');
+        const clearHistoryRow = document.getElementById('clear-history-row');
+        const newChatBtn = document.getElementById('new-chat-drawer-btn');
 
         let isSpeaking = false;
         let isListening = false;
@@ -1212,16 +984,64 @@ body {
         let recognition = null;
         let conversationHistory = [];
 
+        const voiceLangBtn = document.getElementById('voice-lang-btn');
+        const voiceLangLabel = document.getElementById('voice-lang-label');
+        let enVoice = null;
+        let ruVoice = null;
+        let currentVoiceLang = storage.get('voiceLang', 'en-US');
+
         function initVoices() {
             if (!synth) return;
             const voices = synth.getVoices();
-            selectedVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel')))
-                         || voices.find(v => v.lang.startsWith('en'))
-                         || voices[0];
+            enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Alex')))
+                   || voices.find(v => v.lang.startsWith('en'))
+                   || voices[0];
+
+            ruVoice = voices.find(v => v.lang.startsWith('ru') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Milena') || v.name.includes('Yuri') || v.name.includes('Tatyana')))
+                   || voices.find(v => v.lang.startsWith('ru'));
+
+            selectedVoice = enVoice;
         }
         initVoices();
         if (synth && synth.onvoiceschanged !== undefined) {
             synth.onvoiceschanged = initVoices;
+        }
+
+        function getVoiceConfig(text) {
+            const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
+            const latin = (text.match(/[a-zA-Z]/g) || []).length;
+            if (cyrillic > latin && ruVoice) {
+                return { voice: ruVoice, lang: 'ru-RU' };
+            }
+            return { voice: enVoice || selectedVoice, lang: 'en-US' };
+        }
+
+        function updateVoiceLangUI() {
+            const isRu = currentVoiceLang.startsWith('ru');
+            if (voiceLangBtn) {
+                voiceLangBtn.className = 'pill-lang-btn ' + (isRu ? 'ru' : 'en');
+            }
+            if (voiceLangLabel) {
+                voiceLangLabel.textContent = isRu ? 'RU' : 'EN';
+            }
+            if (recognition) {
+                recognition.lang = currentVoiceLang;
+            }
+        }
+
+        if (voiceLangBtn) {
+            voiceLangBtn.addEventListener('click', () => {
+                currentVoiceLang = currentVoiceLang.startsWith('en') ? 'ru-RU' : 'en-US';
+                storage.set('voiceLang', currentVoiceLang);
+                updateVoiceLangUI();
+                const langName = currentVoiceLang.startsWith('ru') ? 'Русский (RU)' : 'English (EN)';
+                if (statusText && !isListening && !isSpeaking) {
+                    statusText.textContent = 'Микрофон: ' + langName;
+                    setTimeout(() => {
+                        if (!isListening && !isSpeaking) statusText.textContent = 'Готов к разговору';
+                    }, 1600);
+                }
+            });
         }
 
         function loadSettings() {
@@ -1278,7 +1098,7 @@ body {
         function setOrbState(state) {
             characterOrb.className = 'orb-sphere ' + state;
             if (state === 'speaking') statusText.textContent = 'Nova говорит...';
-            else if (state === 'listening') statusText.textContent = 'Слушаю вас (English)...';
+            else if (state === 'listening') statusText.textContent = currentVoiceLang.startsWith('ru') ? 'Слушаю вас (Русский)...' : 'Слушаю вас (English)...';
             else if (state === 'thinking') statusText.textContent = 'Groq генерирует ответ...';
             else statusText.textContent = 'Готов к разговору';
         }
@@ -1291,9 +1111,10 @@ body {
             if (!textEl) return;
             synth.cancel();
             const rawText = textEl.innerText.replace(/Nova — это ИИ.*/, '');
+            const config = getVoiceConfig(rawText);
             const utterance = new SpeechSynthesisUtterance(rawText);
-            if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.lang = 'en-US';
+            if (config.voice) utterance.voice = config.voice;
+            utterance.lang = config.lang;
             utterance.rate = parseFloat(voiceRateInput.value);
             utterance.onstart = () => { isSpeaking = true; setOrbState('speaking'); };
             utterance.onend = () => { isSpeaking = false; setOrbState('idle'); if (isLiveModeActive) setTimeout(startListening, 300); };
@@ -1312,10 +1133,13 @@ body {
             });
         };
 
+        updateVoiceLangUI();
+
+        // Speech Recognition
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRec) {
             recognition = new SpeechRec();
-            recognition.lang = 'en-US';
+            recognition.lang = currentVoiceLang;
             recognition.continuous = false;
             recognition.onstart = () => {
                 isListening = true;
@@ -1335,6 +1159,7 @@ body {
         function startListening() {
             if (!recognition) return;
             if (synth) synth.cancel();
+            recognition.lang = currentVoiceLang;
             try { recognition.start(); } catch (e) {}
         }
 
@@ -1357,27 +1182,64 @@ body {
             else { if (recognition) recognition.stop(); stopListening(); if (synth) synth.cancel(); }
         });
 
-        document.querySelectorAll('.topic-chip, .topic-item').forEach(chip => {
-            chip.addEventListener('click', (e) => {
+        if (drawerVoiceToggle) {
+            drawerVoiceToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 closeDrawer();
-                const prompt = chip.getAttribute('data-prompt');
-                chatInput.value = prompt;
-                submitMessage(prompt);
+                startListening();
             });
-        });
+        }
 
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (text) submitMessage(text);
-        });
+        function scrollToBottom() {
+            if (contentArea) setTimeout(() => { contentArea.scrollTop = contentArea.scrollHeight; }, 60);
+        }
 
-        async function submitMessage(text) {
+        function appendMessage(role, text) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${role}`;
+            if (role === 'user') {
+                bubble.innerHTML = `<div class="bubble-user-content">${escapeHTML(text)}</div>`;
+            } else {
+                let formatted = escapeHTML(text);
+                const corr = formatted.match(/\[Correction\]:\s*(.*?)(?=\n\n|\n[A-Z]|$)/s);
+                if (corr) {
+                    formatted = formatted.replace(corr[0], `<div class="correction-block"><strong>[Correction]</strong>${corr[1]}</div>`);
+                }
+                formatted = formatted.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+                bubble.innerHTML = `
+                    <div class="bubble-assistant-content"><p>${formatted}</p></div>
+                    <div class="msg-actions-row">
+                        <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        </button>
+                        <button class="action-icon-btn" title="Скопировать" onclick="copyTextFromEl(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                    </div>
+                    <div class="ai-disclaimer">Nova AI — виртуальный тьютор английского языка.</div>
+                `;
+            }
+            chatMessages.appendChild(bubble);
+            scrollToBottom();
+
+            if (role === 'assistant' && autoSpeakCheck.checked) {
+                const btn = bubble.querySelector('.speak-btn');
+                if (btn) speakTextFromEl(btn);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',\"'\":'&#39;','\"':'&quot;'}[t] || t));
+        }
+
+        async function submitMessage(message) {
+            if (!message || !message.trim()) return;
+            const clean = message.trim();
             chatInput.value = '';
-            appendMessage('user', text);
-            conversationHistory.push({ role: 'user', content: text });
+            appendMessage('user', clean);
             setOrbState('thinking');
+
+            conversationHistory.push({ role: 'user', content: clean });
 
             const apiKey = storage.get('apiKey', '');
             if (!apiKey) {
@@ -1390,14 +1252,24 @@ body {
             const level = storage.get('level', 'intermediate');
             const style = storage.get('style', 'friendly');
 
-            const systemPrompt = `You are 'Nova', an engaging, friendly, and expert native English tutor.
+            const systemPrompt = `You are 'Nova', an empathetic, engaging, and professional bilingual AI English tutor and conversational partner.
+You possess native-level fluency in both RUSSIAN (Русский) and ENGLISH (English).
 Student CEFR level: ${level.toUpperCase()}. Teaching style: ${style}.
-Rules:
-1. Always converse in clear, natural English appropriate for the student's level.
-2. If the student makes grammar/spelling mistakes, gently provide a correction at the start using:
-   [Correction]: "Student sentence" -> "Correct natural version" (Brief explanation).
-3. If the student speaks Russian, explain concepts simply, but encourage English.
-4. Conclude with an engaging question to keep the conversation flowing.`;
+
+Bilingual Tutoring Guidelines:
+1. COMPLETE BILINGUAL UNDERSTANDING:
+   - You completely understand everything the user says in Russian, English, or any mix of both languages.
+   - If the user asks a question in Russian (e.g. "как сказать...", "в чем разница между...", "объясни правило...", "переведи..."): Explain clearly, warmly, and concisely in Russian, providing natural English examples, usage notes, and pronunciation tips.
+   - If the user responds in Russian during a dialog: Understand their thought, show how a native speaker would express it naturally in English, and kindly encourage them to practice saying it in English.
+   - If the user speaks or writes in English: Reply predominantly in natural English suitable for their CEFR level (${level}).
+
+2. CONSTRUCTIVE CORRECTIONS:
+   - If the user writes or speaks with mistakes in English, kindly address them constructively:
+     [Correction]: "Your sentence" -> "Natural way to say it" (Пояснение на русском или английском).
+
+3. CONVERSATION FLOW:
+   - Conclude your responses with an engaging, friendly question or conversational hook in English to keep the practice going.
+   - Keep your tone warm, encouraging, and supportive.`;
 
             const payloadMessages = [
                 { role: 'system', content: systemPrompt },
@@ -1419,80 +1291,55 @@ Rules:
                     })
                 });
 
-                if (res.ok) {
-                    const data = await res.json();
+                const data = await res.json();
+                setOrbState('idle');
+
+                if (res.ok && data.choices && data.choices.length > 0) {
                     const reply = data.choices[0].message.content;
                     conversationHistory.push({ role: 'assistant', content: reply });
                     appendMessage('assistant', reply);
-
-                    if (autoSpeakCheck.checked || isLiveModeActive) {
-                        const lastBubble = chatMessages.lastElementChild;
-                        const speakBtn = lastBubble ? lastBubble.querySelector('.speak-btn') : null;
-                        if (speakBtn) speakTextFromEl(speakBtn);
-                    } else {
-                        setOrbState('idle');
-                    }
                 } else {
-                    const err = await res.json().catch(() => ({}));
-                    setOrbState('idle');
-                    appendMessage('assistant', `❌ <strong>Ошибка Groq:</strong> ${err.error ? err.error.message : res.statusText}`);
+                    const err = data.error ? data.error.message : 'Ошибка запроса к Groq';
+                    appendMessage('assistant', `⚠️ Groq API Error: ${err}`);
                 }
             } catch (err) {
                 setOrbState('idle');
-                appendMessage('assistant', `❌ <strong>Ошибка сети:</strong> ${err.message}`);
+                appendMessage('assistant', `⚠️ Ошибка соединения с Groq Cloud: ${err.message}`);
             }
         }
 
-        function appendMessage(role, text) {
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ${role}`;
-            if (role === 'user') {
-                bubble.innerHTML = `<div class="bubble-user-content">${escapeHtml(text)}</div>`;
-            } else {
-                bubble.innerHTML = `
-                    <div class="bubble-assistant-content">${formatMarkdown(text)}</div>
-                    <div class="msg-actions-row">
-                        <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        </button>
-                        <button class="action-icon-btn" title="Скопировать" onclick="copyTextFromEl(this)">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        </button>
-                    </div>
-                    <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
-                `;
-            }
-            chatMessages.appendChild(bubble);
-            contentArea.scrollTop = contentArea.scrollHeight;
-        }
-
-        function escapeHtml(s) {
-            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        function formatMarkdown(t) {
-            return t
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/\\[Correction\\]:(.*?)(?=\\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
-                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-                .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
-                .replace(/\\n\\n/g, '</p><p>')
-                .replace(/\\n/g, '<br>');
-        }
-
-        clearHistoryRow.addEventListener('click', () => {
-            if (confirm('Очистить историю диалогов?')) {
-                conversationHistory = [];
-                chatMessages.innerHTML = `
-                    <div class="chat-bubble assistant">
-                        <div class="bubble-assistant-content">
-                            <p>История очищена. О чем ты хочешь поговорить сегодня?</p>
-                        </div>
-                    </div>
-                `;
-                closeSettings();
-            }
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitMessage(chatInput.value);
         });
+
+        document.querySelectorAll('.topic-chip, .topic-item').forEach(b => {
+            b.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeDrawer();
+                submitMessage(b.dataset.prompt);
+            });
+        });
+
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeDrawer();
+                conversationHistory = [];
+                chatMessages.innerHTML = '';
+                chatInput.focus();
+            });
+        }
+
+        if (clearHistoryRow) {
+            clearHistoryRow.addEventListener('click', () => {
+                if (confirm('Очистить историю диалога?')) {
+                    conversationHistory = [];
+                    chatMessages.innerHTML = '';
+                    closeSettings();
+                }
+            });
+        }
     </script>
 </body>
 </html>
