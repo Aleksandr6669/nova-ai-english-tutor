@@ -46,6 +46,11 @@
             ⚡ Быстрый вход (Демо-доступ)
         </a>
     </div>
+    <div style="margin-top: 8px;">
+        <a href="{{ url_for('standalone') }}" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary); font-weight: 500; font-size: 13px; height: 40px; text-decoration: none;">
+            🌐 Автономная WebApp-версия (без сервера)
+        </a>
+    </div>
 
     <div style="text-align: center; margin-top: 24px; font-size: 14px; color: var(--text-muted);">
         Нет аккаунта? <a href="{{ url_for('register') }}" style="color: var(--accent-blue); text-decoration: none; font-weight: 500;">Зарегистрироваться</a>

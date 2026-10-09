@@ -42,10 +42,12 @@ def index():
         return redirect(url_for('login'))
     user = db.get_user_by_id(session['user_id'])
     if not user:
-        session.clear()
-        return redirect(url_for('login'))
-    settings = db.get_user_settings(session['user_id'])
-    history = db.get_recent_chat_history(session['user_id'], limit=30)
+        # In serverless environments, if instance reloaded, re-create demo user smoothly
+        user = db.get_or_create_demo_user()
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+    settings = db.get_user_settings(user['id'])
+    history = db.get_recent_chat_history(user['id'], limit=30)
     return render_template('index.html', user=user, settings=settings, models=SUPPORTED_MODELS, history=history)
 
 @app.route('/demo-login')
@@ -214,6 +216,23 @@ def not_found(e):
     if 'user_id' in session:
         return redirect(url_for('index'))
     return redirect(url_for('login'))
+
+@app.errorhandler(500)
+def server_error(e):
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if request.path.startswith('/api/'):
+        return jsonify({"error": "server_error", "message": str(e)}), 500
+    try:
+        if 'user_id' in session:
+            return redirect(url_for('index'))
+        return redirect(url_for('login'))
+    except Exception:
+        return render_template('login.html', error="Произошла временная ошибка, попробуйте войти снова."), 200
 
 if __name__ == '__main__':
     print("Starting English AI Tutor Flask Server on http://127.0.0.1:5000 ...")
