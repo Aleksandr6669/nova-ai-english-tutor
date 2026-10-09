@@ -40,6 +40,13 @@
             <button type="submit" class="btn btn-primary btn-block">Войти в систему</button>
         </form>
 
+        <div style="margin: 16px 0; text-align: center; position: relative;">
+            <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 16px 0;">
+            <a href="{{ url_for('demo_login') }}" class="btn btn-secondary btn-block" style="font-size: 13px;">
+                ⚡ Быстрый вход (Демо-доступ)
+            </a>
+        </div>
+
         <div class="auth-footer">
             <p>Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
         </div>

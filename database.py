@@ -1,8 +1,38 @@
 import sqlite3
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'tutor.db')
+try:
+    from werkzeug.security import generate_password_hash, check_password_hash
+except ImportError:
+    import hashlib
+    import secrets
+
+    def generate_password_hash(password):
+        salt = secrets.token_hex(8)
+        hashed = hashlib.sha256((salt + password).encode('utf-8')).hexdigest()
+        return f"{salt}${hashed}"
+
+    def check_password_hash(pwhash, password):
+        if not pwhash or '$' not in pwhash:
+            return False
+        salt, hashed = pwhash.split('$', 1)
+        return hashlib.sha256((salt + password).encode('utf-8')).hexdigest() == hashed
+
+def get_db_path():
+    if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return '/tmp/tutor.db'
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    local_path = os.path.join(local_dir, 'tutor.db')
+    try:
+        test_conn = sqlite3.connect(local_path)
+        test_conn.execute('CREATE TABLE IF NOT EXISTS _test_write (id INT)')
+        test_conn.commit()
+        test_conn.close()
+        return local_path
+    except Exception:
+        return '/tmp/tutor.db'
+
+DB_PATH = get_db_path()
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -10,7 +40,7 @@ def get_db():
     return conn
 
 def init_db():
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     # Users table
@@ -55,7 +85,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Auto-initialize
+try:
+    init_db()
+except Exception as e:
+    print(f"Database init notice: {e}")
+
 def create_user(username, email, password):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -63,7 +100,6 @@ def create_user(username, email, password):
         cursor.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
                        (username.strip(), email.strip().lower(), pw_hash))
         user_id = cursor.lastrowid
-        # Create default settings
         cursor.execute("INSERT INTO user_settings (user_id) VALUES (?)", (user_id,))
         conn.commit()
         return user_id, None
@@ -73,10 +109,13 @@ def create_user(username, email, password):
         elif "users.username" in str(e):
             return None, "Пользователь с таким логином уже существует."
         return None, "Ошибка регистрации: логин или email уже заняты."
+    except Exception as e:
+        return None, f"Ошибка базы данных: {str(e)}"
     finally:
         conn.close()
 
 def authenticate_user(email, password):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),))
@@ -86,7 +125,25 @@ def authenticate_user(email, password):
         return user
     return None
 
+def get_or_create_demo_user():
+    init_db()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = 'demo@example.com'")
+    user = cursor.fetchone()
+    if not user:
+        pw_hash = generate_password_hash('demo123')
+        cursor.execute("INSERT INTO users (username, email, password_hash) VALUES ('Guest', 'demo@example.com', ?)", (pw_hash,))
+        user_id = cursor.lastrowid
+        cursor.execute("INSERT INTO user_settings (user_id) VALUES (?)", (user_id,))
+        conn.commit()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
+    conn.close()
+    return user
+
 def get_user_by_id(user_id):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
@@ -95,6 +152,7 @@ def get_user_by_id(user_id):
     return user
 
 def get_user_settings(user_id):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM user_settings WHERE user_id = ?", (user_id,))
@@ -113,6 +171,7 @@ def get_user_settings(user_id):
     return dict(settings)
 
 def update_user_settings(user_id, groq_api_key=None, model_name=None, english_level=None, tutor_style=None, voice_rate=None, voice_pitch=None, auto_speak=None):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM user_settings WHERE user_id = ?", (user_id,))
@@ -151,6 +210,7 @@ def update_user_settings(user_id, groq_api_key=None, model_name=None, english_le
     conn.close()
 
 def save_chat_message(user_id, role, content, corrections=None):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO chat_history (user_id, role, content, corrections) VALUES (?, ?, ?, ?)",
@@ -159,6 +219,7 @@ def save_chat_message(user_id, role, content, corrections=None):
     conn.close()
 
 def get_recent_chat_history(user_id, limit=20):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT role, content, corrections, timestamp FROM chat_history WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit))
@@ -167,6 +228,7 @@ def get_recent_chat_history(user_id, limit=20):
     return [dict(r) for r in reversed(rows)]
 
 def clear_chat_history(user_id):
+    init_db()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM chat_history WHERE user_id = ?", (user_id,))

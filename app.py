@@ -1,14 +1,17 @@
 import os
 import json
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
 import database as db
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'english_ai_tutor_secret_key_2026_x99')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Initialize DB on start
-db.init_db()
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'english_ai_tutor_secret_key_2026_x99')
 
 SUPPORTED_MODELS = [
     {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B (Recommended)", "desc": "Самая умная модель для глубоких объяснений и свободной речи"},
@@ -44,6 +47,21 @@ def index():
     settings = db.get_user_settings(session['user_id'])
     history = db.get_recent_chat_history(session['user_id'], limit=30)
     return render_template('index.html', user=user, settings=settings, models=SUPPORTED_MODELS, history=history)
+
+@app.route('/demo-login')
+def demo_login():
+    user = db.get_or_create_demo_user()
+    session['user_id'] = user['id']
+    session['username'] = user['username']
+    flash('Вы вошли как гость (демо-режим). Начните диалог или введите API-ключ в настройках.', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/standalone')
+def standalone():
+    standalone_file = os.path.join(BASE_DIR, 'english_ai_tutor.html')
+    if os.path.exists(standalone_file):
+        return send_from_directory(BASE_DIR, 'english_ai_tutor.html')
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
