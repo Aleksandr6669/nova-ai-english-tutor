@@ -1,239 +1,312 @@
 {% extends "base.html" %}
-{% block title %}Nova — Интерактивный AI Тьютор Английского{% endblock %}
+{% block title %}Nova Spark — AI English Tutor{% endblock %}
 {% block content %}
-<div class="main-layout">
-    <!-- Top Navigation Bar -->
-    <header class="top-nav">
-        <div class="nav-brand">
-            <div class="avatar-mini">
-                <div class="mini-orb"></div>
-            </div>
-            <div class="brand-meta">
-                <h1>Nova <span>AI Tutor</span></h1>
-                <p class="status-indicator"><span class="status-dot"></span> Online &bull; Groq Engine</p>
-            </div>
+<div class="app-container">
+    <!-- Top Navigation Bar (Screenshots 3 & 4) -->
+    <header class="top-bar">
+        <button id="open-drawer-btn" class="icon-btn" title="Меню">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="top-title-group" id="header-title-btn">
+            <span class="top-title">Nova Spark</span>
+            <span class="beta-badge">БЕТА</span>
         </div>
 
-        <div class="nav-actions">
-            <button id="toggle-voice-btn" class="nav-btn voice-toggle-btn active" title="Автоматическое озвучивание">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                <span class="btn-label">TTS</span>
-            </button>
-            <button id="open-settings-btn" class="nav-btn settings-btn" title="Настройки модели и Groq API">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span class="btn-label">Настройки</span>
-            </button>
-            <div class="user-profile">
-                <span class="username">{{ user['username'] }}</span>
-                <a href="{{ url_for('logout') }}" class="nav-btn logout-btn" title="Выход">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </a>
-            </div>
-        </div>
+        <button id="open-settings-btn" class="icon-btn" title="Настройки">
+            <!-- Sliders / Settings icon (matching Screenshot 3) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
     </header>
 
-    <!-- Main Workspace: Character Stage + Chat Workspace -->
-    <div class="workspace-grid">
-        <!-- Left / Top: Virtual Character Stage -->
-        <section class="character-stage">
-            <div class="stage-container">
-                <!-- 3D Avatar Placeholder Container (Ready for Three.js / Canvas 3D Character) -->
-                <div class="avatar-viewport" id="avatar-viewport">
-                    <div class="avatar-halo"></div>
-                    <div class="avatar-orb" id="character-orb">
-                        <div class="orb-core"></div>
-                        <div class="orb-ring ring-1"></div>
-                        <div class="orb-ring ring-2"></div>
-                        <div class="orb-wave wave-1"></div>
-                        <div class="orb-wave wave-2"></div>
-                        <div class="orb-particles" id="orb-particles"></div>
-                    </div>
+    <!-- Main Scrollable Area -->
+    <main class="content-area" id="content-area">
+        <!-- Virtual Character Orb Hero Widget -->
+        <section class="character-hero">
+            <div class="orb-container" id="character-orb-wrap" title="Нажмите, чтобы начать разговор">
+                <div class="orb-glow"></div>
+                <div class="orb-sphere" id="character-orb">
+                    <div class="orb-inner"></div>
+                    <div class="orb-ring"></div>
                 </div>
-
-                <!-- Character Status & Speech Indicator -->
-                <div class="character-feedback">
-                    <div class="character-state-badge" id="character-state">
-                        <span class="state-icon">✨</span>
-                        <span class="state-text">Ready to talk</span>
-                    </div>
-                    <div class="sound-wave-visualizer" id="wave-visualizer">
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                </div>
-
-                <!-- Quick English Practice Topics -->
-                <div class="practice-topics">
-                    <span class="topics-title">Быстрый старт:</span>
-                    <div class="topics-pills">
-                        <button class="topic-pill" data-prompt="Hi Nova! Can we have a friendly conversation to practice everyday English?">💬 Free Chat</button>
-                        <button class="topic-pill" data-prompt="Let's roleplay: You are a barista in London, and I want to order coffee and breakfast.">☕ Coffee Shop</button>
-                        <button class="topic-pill" data-prompt="Can you explain the difference between Present Perfect and Past Simple with examples?">📚 Grammar Tip</button>
-                        <button class="topic-pill" data-prompt="Teach me 3 advanced C1 idioms with their meanings and sample sentences.">🎯 Idioms</button>
-                    </div>
-                </div>
+            </div>
+            <div class="character-tag" id="character-status-badge">
+                <span class="dot"></span>
+                <span id="status-text">Готов к разговору</span>
             </div>
         </section>
 
-        <!-- Right / Bottom: Interactive Chat Area -->
-        <section class="chat-section">
-            <div class="chat-container">
-                <!-- Messages Stream -->
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message assistant-message welcome-msg">
-                        <div class="msg-avatar">
-                            <div class="avatar-glow"></div>
-                        </div>
-                        <div class="msg-body">
-                            <div class="msg-header">
-                                <span class="sender-name">Nova</span>
-                                <span class="msg-time">Just now</span>
-                            </div>
-                            <div class="msg-text">
-                                Hello, <strong>{{ user['username'] }}</strong>! 👋 I am <strong>Nova</strong>, your personal AI English tutor powered by Groq. 
-                                <br><br>
-                                You can talk to me via <strong>voice</strong> (click the microphone below) or type your messages. I will guide your conversation, correct mistakes, and help you speak English fluently!
-                                {% if not settings['groq_api_key'] %}
-                                <div class="api-key-warning">
-                                    ⚠️ <strong>Внимание:</strong> Не забудьте указать ваш <strong>Groq API ключ</strong> в <a href="#" id="link-open-settings">Настройках</a>, чтобы подключить выбранную модель.
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    {% for msg in history %}
-                    <div class="message {{ 'user-message' if msg['role'] == 'user' else 'assistant-message' }}">
-                        <div class="msg-avatar">
-                            {% if msg['role'] == 'assistant' %}
-                            <div class="avatar-glow"></div>
-                            {% else %}
-                            <div class="user-avatar-circle">{{ user['username'][:1].upper() }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="msg-body">
-                            <div class="msg-header">
-                                <span class="sender-name">{{ 'You' if msg['role'] == 'user' else 'Nova' }}</span>
-                                <span class="msg-time">{{ msg['timestamp'][11:16] if msg['timestamp'] else '' }}</span>
-                            </div>
-                            <div class="msg-text">{{ msg['content'] }}</div>
-                            {% if msg['role'] == 'assistant' %}
-                            <button class="speak-msg-btn" title="Озвучить ответ" onclick="speakText(this)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                                <span>Слушать</span>
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Input Controls Area -->
-                <div class="chat-input-area">
-                    <form id="chat-form" class="chat-form">
-                        <div class="input-controls">
-                            <!-- Voice Input Button (Speech-to-Text) -->
-                            <button type="button" id="voice-input-btn" class="action-btn voice-btn" title="Голосовой ввод (нажмите и говорите)">
-                                <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                                <span class="pulse-ring"></span>
-                            </button>
-
-                            <!-- Text Input Box -->
-                            <textarea id="chat-input" placeholder="Type a message in English or click the microphone to speak..." rows="1" autocomplete="off"></textarea>
-
-                            <!-- Send Button -->
-                            <button type="submit" id="send-btn" class="action-btn send-btn" title="Отправить сообщение">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                            </button>
-                        </div>
-                        <div class="input-subtext">
-                            <span id="speech-recognition-status">Microphone: Ready</span>
-                            <button type="button" id="clear-chat-btn" class="clear-link">Очистить диалог</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <!-- Quick Topics Carousel -->
+        <section class="topics-scroll">
+            <button class="topic-chip" data-prompt="Hi Nova! Let's have a friendly spoken conversation in English to practice my everyday speaking skills.">💬 Free Talk</button>
+            <button class="topic-chip" data-prompt="Let's roleplay: You are a barista in London, and I am a customer ordering coffee and snacks.">☕ Coffee Shop</button>
+            <button class="topic-chip" data-prompt="Can you explain when to use Present Perfect vs Past Simple with real-life examples?">📚 Grammar Tip</button>
+            <button class="topic-chip" data-prompt="Teach me 3 natural modern English idioms with meanings and sample dialogs.">🎯 Idioms</button>
+            <button class="topic-chip" data-prompt="I have a job interview in English. Ask me 3 typical behavioral questions and review my answers.">💼 Job Interview</button>
         </section>
-    </div>
-</div>
 
-<!-- Settings Modal Window -->
-<div class="modal-backdrop" id="settings-modal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <div class="modal-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <h3>Настройки AI и Голоса</h3>
+        <!-- Messages Stream -->
+        <section class="messages-list" id="chat-messages">
+            <!-- Welcome message -->
+            <div class="chat-bubble assistant">
+                <div class="bubble-assistant-content">
+                    <p>Привет, <strong>{{ user['username'] }}</strong>! 👋 Я <strong>Nova</strong> — твой виртуальный AI-тьютор английского языка на базе моделей <strong>Groq</strong>.</p>
+                    <p>Мы можем общаться голосом или текстом. Я помогу тебе свободно заговорить на английском, объясню правила и разберу любые ошибки в речи.</p>
+                    {% if not settings['groq_api_key'] %}
+                    <div class="correction-block" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
+                        <strong style="color: #fbbf24;">Подсказка:</strong> Для общения укажи свой бесплатный <strong>Groq API ключ</strong> в <a href="#" id="link-open-settings" style="color: #60a5fa; text-decoration: underline;">Настройках</a>.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="msg-actions-row">
+                    <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    </button>
+                    <button class="action-icon-btn" title="Скопировать" onclick="copyTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                </div>
+                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
             </div>
-            <button class="close-modal-btn" id="close-settings-btn">&times;</button>
+
+            <!-- Historical messages from DB -->
+            {% for msg in history %}
+            <div class="chat-bubble {{ 'user' if msg['role'] == 'user' else 'assistant' }}">
+                {% if msg['role'] == 'user' %}
+                <div class="bubble-user-content">{{ msg['content'] }}</div>
+                {% else %}
+                <div class="bubble-assistant-content">{{ msg['content'] }}</div>
+                <div class="msg-actions-row">
+                    <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    </button>
+                    <button class="action-icon-btn" title="Скопировать" onclick="copyTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                </div>
+                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+    <!-- Floating Bottom Dock Bar (Screenshots 3 & 4) -->
+    <footer class="bottom-dock">
+        <form id="chat-form" class="floating-pill-bar">
+            <!-- (+) Add Action Button -->
+            <button type="button" class="pill-add-btn" id="pill-add-btn" title="Прикрепить / Темы">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+
+            <!-- Input Box -->
+            <input type="text" id="chat-input" class="pill-input" placeholder="Опишите задачу или начните говорить..." autocomplete="off">
+
+            <!-- Mic Input Button (Speech-to-Text) -->
+            <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод (нажмите и говорите)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+
+            <!-- Violet Live Audio Waveform Button (Screenshot 3 & 4) -->
+            <button type="button" class="voice-wave-pill" id="live-voice-mode-btn" title="Режим живого голосового разговора">
+                <span></span><span></span><span></span><span></span>
+            </button>
+        </form>
+    </footer>
+
+    <!-- ========================================================
+         DRAWER / SIDEBAR MENU (Screenshot 2 Exact Style)
+         ======================================================== -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <aside class="drawer-panel" id="drawer-panel">
+        <div class="drawer-top">
+            <span class="drawer-brand">Nova English</span>
+            <button class="icon-btn" id="close-drawer-btn" title="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
 
-        <form id="settings-form" class="modal-body">
-            <!-- Groq API Key -->
-            <div class="setting-item">
-                <label for="groq_api_key">Groq API Ключ</label>
-                <div class="input-wrap">
-                    <input type="password" id="groq_api_key" name="groq_api_key" value="{{ settings['groq_api_key'] }}" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
-                    <button type="button" id="toggle-key-visibility" class="mini-btn">Показать</button>
+        <nav class="drawer-menu">
+            <a href="#" class="drawer-item" id="new-chat-drawer-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span>Новый чат</span>
+            </a>
+            <a href="#" class="drawer-item" id="search-chats-drawer-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Поиск по диалогам</span>
+            </a>
+            <a href="#" class="drawer-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>Spark Режим</span>
+                <span class="beta-badge" style="margin-left: auto;">БЕТА</span>
+            </a>
+            <a href="{{ url_for('standalone') }}" class="drawer-item" target="_blank">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span>Автономная WebApp-версия</span>
+            </a>
+
+            <div class="drawer-section-title">ПРАКТИКА ЯЗЫКА</div>
+            <a href="#" class="drawer-item topic-item" data-prompt="Let's practice conversational fluency on travel and culture.">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Разговорная речь</span>
+            </a>
+            <a href="#" class="drawer-item topic-item" data-prompt="Give me a comprehensive grammar quiz on conditional sentences (Zero, First, Second, Third).">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Грамматический тест</span>
+            </a>
+            <a href="#" class="drawer-item topic-item" data-prompt="Let's simulate an IELTS Speaking Part 2 task card. Give me a topic and time me.">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>IELTS / TOEFL Тренинг</span>
+            </a>
+        </nav>
+
+        <!-- User profile in drawer bottom (matching Screenshot 2) -->
+        <div class="drawer-profile">
+            <div class="profile-info">
+                <div class="user-avatar-ring">
+                    {{ user['username'][:1].upper() }}
                 </div>
-                <small class="helper-text">Получить бесплатный API ключ можно на сайте <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></small>
-            </div>
-
-            <!-- Groq Model Selector -->
-            <div class="setting-item">
-                <label for="model_name">Модель Groq</label>
-                <select id="model_name" name="model_name" class="custom-select">
-                    {% for m in models %}
-                    <option value="{{ m.id }}" {% if settings['model_name'] == m.id %}selected{% endif %}>
-                        {{ m.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <small class="helper-text" id="model-desc">Высокая скорость генерации и богатый словарь английского языка.</small>
-            </div>
-
-            <!-- English Proficiency Level -->
-            <div class="setting-item">
-                <label for="english_level">Уровень Английского Языка</label>
-                <select id="english_level" name="english_level" class="custom-select">
-                    <option value="beginner" {% if settings['english_level'] == 'beginner' %}selected{% endif %}>A1–A2 (Beginner / Элементарный)</option>
-                    <option value="intermediate" {% if settings['english_level'] == 'intermediate' %}selected{% endif %}>B1–B2 (Intermediate / Средний)</option>
-                    <option value="advanced" {% if settings['english_level'] == 'advanced' %}selected{% endif %}>C1–C2 (Advanced / Продвинутый)</option>
-                </select>
-            </div>
-
-            <!-- Tutor Style -->
-            <div class="setting-item">
-                <label for="tutor_style">Стиль обучения</label>
-                <select id="tutor_style" name="tutor_style" class="custom-select">
-                    <option value="friendly" {% if settings['tutor_style'] == 'friendly' %}selected{% endif %}>Дружелюбный и разговорный (Casual)</option>
-                    <option value="strict" {% if settings['tutor_style'] == 'strict' %}selected{% endif %}>Строгий с акцентом на грамматику (Grammar Focus)</option>
-                    <option value="business" {% if settings['tutor_style'] == 'business' %}selected{% endif %}>Деловой английский (Business English)</option>
-                    <option value="exam" {% if settings['tutor_style'] == 'exam' %}selected{% endif %}>Подготовка к экзаменам (IELTS / TOEFL)</option>
-                </select>
-            </div>
-
-            <!-- Voice Controls -->
-            <div class="setting-item">
-                <div class="toggle-row">
-                    <label for="auto_speak">Автоматически озвучивать ответы персонажа</label>
-                    <input type="checkbox" id="auto_speak" name="auto_speak" {% if settings['auto_speak'] %}checked{% endif %}>
+                <div class="profile-meta">
+                    <h4>{{ user['username'] }}</h4>
+                    <span>English Learner &bull; Pro</span>
                 </div>
             </div>
+            <button class="icon-btn" id="drawer-settings-gear-btn" title="Настройки">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+    </aside>
 
-            <div class="setting-grid-2">
-                <div class="setting-item">
-                    <label for="voice_rate">Скорость речи: <span id="voice_rate_val">{{ settings['voice_rate'] }}x</span></label>
-                    <input type="range" id="voice_rate" name="voice_rate" min="0.7" max="1.3" step="0.05" value="{{ settings['voice_rate'] }}">
+    <!-- ========================================================
+         SETTINGS SCREEN (Screenshot 1 Exact Inset Grouped Style)
+         ======================================================== -->
+    <div class="settings-sheet" id="settings-sheet">
+        <div class="sheet-handle-bar"></div>
+
+        <div class="sheet-header">
+            <h2>Настройки</h2>
+            <button class="icon-btn" id="close-settings-sheet-btn" title="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <!-- Top Limit Card (Screenshot 1) -->
+        <div class="inset-card" style="margin-bottom: 20px;">
+            <div class="inset-row" id="limits-row">
+                <div class="inset-row-left">
+                    <div class="inset-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="inset-row-text">
+                        <span class="inset-title">Лимиты на использование</span>
+                        <span class="inset-subtitle">Groq Cloud: Безлимитный доступ</span>
+                    </div>
                 </div>
-                <div class="setting-item">
-                    <label for="voice_pitch">Тон голоса: <span id="voice_pitch_val">{{ settings['voice_pitch'] }}</span></label>
-                    <input type="range" id="voice_pitch" name="voice_pitch" min="0.8" max="1.2" step="0.05" value="{{ settings['voice_pitch'] }}">
+                <div class="inset-chevron">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <form id="settings-form">
+            <!-- Group 1: НАСТРОЙКИ (Screenshot 1) -->
+            <div class="settings-section-title">Настройки</div>
+            <div class="inset-card">
+                <!-- Groq API Key Input -->
+                <div class="inset-control-wrap">
+                    <label class="inset-label" for="groq_api_key">Groq API Ключ</label>
+                    <input type="password" id="groq_api_key" name="groq_api_key" class="dark-input" value="{{ settings['groq_api_key'] }}" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
+                    <span style="font-size: 11px; color: var(--text-dim); display: block; margin-top: 4px;">Ключ можно получить бесплатно на <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-blue);">console.groq.com</a></span>
+                </div>
+
+                <!-- Model Picker -->
+                <div class="inset-control-wrap">
+                    <label class="inset-label" for="model_name">Модель ИИ</label>
+                    <select id="model_name" name="model_name" class="dark-select">
+                        {% for m in models %}
+                        <option value="{{ m.id }}" {% if settings['model_name'] == m.id %}selected{% endif %}>
+                            {{ m.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Voice / TTS Row -->
+                <div class="inset-control-wrap">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="inset-title" style="font-size: 14px;">Автоматическая озвучка ответов</span>
+                        <input type="checkbox" id="auto_speak" name="auto_speak" style="width: 18px; height: 18px; accent-color: var(--accent-indigo);" {% if settings['auto_speak'] %}checked{% endif %}>
+                    </div>
+                </div>
+
+                <!-- Speed / Rate -->
+                <div class="inset-control-wrap">
+                    <label class="inset-label">Скорость речи: <span id="rate-val">{{ settings['voice_rate'] }}x</span></label>
+                    <input type="range" id="voice_rate" name="voice_rate" min="0.75" max="1.25" step="0.05" value="{{ settings['voice_rate'] }}" style="width: 100%; accent-color: var(--accent-indigo);">
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancel-settings-btn">Отмена</button>
-                <button type="submit" class="btn btn-primary" id="save-settings-btn">Сохранить изменения</button>
+            <!-- Group 2: ОБУЧЕНИЕ АНГЛИЙСКОМУ -->
+            <div class="settings-section-title">Обучение английскому</div>
+            <div class="inset-card">
+                <div class="inset-control-wrap">
+                    <label class="inset-label" for="english_level">Уровень знания языка (CEFR)</label>
+                    <select id="english_level" name="english_level" class="dark-select">
+                        <option value="beginner" {% if settings['english_level'] == 'beginner' %}selected{% endif %}>A1–A2 (Beginner / Начальный)</option>
+                        <option value="intermediate" {% if settings['english_level'] == 'intermediate' %}selected{% endif %}>B1–B2 (Intermediate / Средний)</option>
+                        <option value="advanced" {% if settings['english_level'] == 'advanced' %}selected{% endif %}>C1–C2 (Advanced / Продвинутый)</option>
+                    </select>
+                </div>
+
+                <div class="inset-control-wrap">
+                    <label class="inset-label" for="tutor_style">Стиль общения тьютора</label>
+                    <select id="tutor_style" name="tutor_style" class="dark-select">
+                        <option value="friendly" {% if settings['tutor_style'] == 'friendly' %}selected{% endif %}>Дружелюбный разговорный (Casual)</option>
+                        <option value="strict" {% if settings['tutor_style'] == 'strict' %}selected{% endif %}>Строгий фокус на грамматику</option>
+                        <option value="business" {% if settings['tutor_style'] == 'business' %}selected{% endif %}>Деловой английский (Business)</option>
+                        <option value="exam" {% if settings['tutor_style'] == 'exam' %}selected{% endif %}>Подготовка к экзаменам (IELTS/TOEFL)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Group 3: ДАННЫЕ И КОНФИДЕНЦИАЛЬНОСТЬ (Screenshot 1) -->
+            <div class="settings-section-title">Данные и конфиденциальность</div>
+            <div class="inset-card">
+                <div class="inset-row" id="clear-history-row">
+                    <div class="inset-row-left">
+                        <div class="inset-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </div>
+                        <div class="inset-row-text">
+                            <span class="inset-title">Очистить историю диалогов</span>
+                            <span class="inset-subtitle">Удалить все предыдущие сообщения</span>
+                        </div>
+                    </div>
+                    <div class="inset-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('logout') }}" class="inset-row">
+                    <div class="inset-row-left">
+                        <div class="inset-icon" style="color: #ef4444;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </div>
+                        <div class="inset-row-text">
+                            <span class="inset-title" style="color: #f87171;">Выйти из аккаунта</span>
+                            <span class="inset-subtitle">{{ user['email'] }}</span>
+                        </div>
+                    </div>
+                    <div class="inset-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                </a>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button type="submit" class="icon-btn" style="width: 100%; border-radius: var(--radius-item); background: var(--accent-indigo); font-weight: 600; font-size: 15px; height: 46px;">
+                    Сохранить настройки
+                </button>
             </div>
         </form>
     </div>

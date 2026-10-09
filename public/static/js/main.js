@@ -1,46 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Elements
+    // Top Bar & Navigation
+    const openDrawerBtn = document.getElementById('open-drawer-btn');
+    const closeDrawerBtn = document.getElementById('close-drawer-btn');
+    const drawerPanel = document.getElementById('drawer-panel');
+    const drawerBackdrop = document.getElementById('drawer-backdrop');
+    const openSettingsBtn = document.getElementById('open-settings-btn');
+    const drawerSettingsGearBtn = document.getElementById('drawer-settings-gear-btn');
+    const closeSettingsSheetBtn = document.getElementById('close-settings-sheet-btn');
+    const settingsSheet = document.getElementById('settings-sheet');
+    const linkOpenSettings = document.getElementById('link-open-settings');
+
+    // Chat & Voice Elements
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
+    const contentArea = document.getElementById('content-area');
     const voiceInputBtn = document.getElementById('voice-input-btn');
-    const speechStatus = document.getElementById('speech-recognition-status');
+    const liveVoiceModeBtn = document.getElementById('live-voice-mode-btn');
     const characterOrb = document.getElementById('character-orb');
-    const characterState = document.getElementById('character-state');
-    const waveVisualizer = document.getElementById('wave-visualizer');
-    const clearChatBtn = document.getElementById('clear-chat-btn');
-    
-    // Settings modal elements
-    const settingsModal = document.getElementById('settings-modal');
-    const openSettingsBtn = document.getElementById('open-settings-btn');
-    const closeSettingsBtn = document.getElementById('close-settings-btn');
-    const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+    const statusText = document.getElementById('status-text');
     const settingsForm = document.getElementById('settings-form');
-    const toggleVoiceBtn = document.getElementById('toggle-voice-btn');
-    const toggleKeyBtn = document.getElementById('toggle-key-visibility');
-    const apiKeyInput = document.getElementById('groq_api_key');
-    const linkOpenSettings = document.getElementById('link-open-settings');
+    const voiceRateInput = document.getElementById('voice_rate');
+    const rateVal = document.getElementById('rate-val');
+    const clearHistoryRow = document.getElementById('clear-history-row');
 
-    const voiceRateRange = document.getElementById('voice_rate');
-    const voicePitchRange = document.getElementById('voice_pitch');
-    const voiceRateVal = document.getElementById('voice_rate_val');
-    const voicePitchVal = document.getElementById('voice_pitch_val');
-
-    // State
+    // Speech & Voice State
     let isSpeaking = false;
     let isListening = false;
-    let autoSpeak = true;
+    let isLiveModeActive = false;
+    let synth = window.speechSynthesis;
     let selectedVoice = null;
     let recognition = null;
-    let synth = window.speechSynthesis;
 
-    // Load available voices for SpeechSynthesis
+    // Initialize English Voices
     function initVoices() {
         if (!synth) return;
         const voices = synth.getVoices();
-        // Prefer natural English voices (Google US English, Samantha, Daniel, etc.)
-        selectedVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel'))) 
-                     || voices.find(v => v.lang.startsWith('en')) 
+        selectedVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Alex')))
+                     || voices.find(v => v.lang.startsWith('en'))
                      || voices[0];
     }
     initVoices();
@@ -48,56 +45,276 @@ document.addEventListener('DOMContentLoaded', () => {
         synth.onvoiceschanged = initVoices;
     }
 
-    // Modal Events
-    function showModal() {
-        settingsModal.classList.add('show');
+    // Drawer Open/Close
+    function openDrawer() {
+        drawerPanel.classList.add('open');
+        drawerBackdrop.classList.add('active');
     }
-    function hideModal() {
-        settingsModal.classList.remove('show');
+    function closeDrawer() {
+        drawerPanel.classList.remove('open');
+        drawerBackdrop.classList.remove('active');
     }
 
-    if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);
-    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', hideModal);
-    if (cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', hideModal);
-    if (linkOpenSettings) linkOpenSettings.addEventListener('click', (e) => { e.preventDefault(); showModal(); });
+    if (openDrawerBtn) openDrawerBtn.addEventListener('click', openDrawer);
+    if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', closeDrawer);
+    if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
 
-    settingsModal.addEventListener('click', (e) => {
-        if (e.target === settingsModal) hideModal();
-    });
+    // Settings Sheet Open/Close (Screenshot 1 Style)
+    function openSettings() {
+        closeDrawer();
+        settingsSheet.classList.add('active');
+    }
+    function closeSettings() {
+        settingsSheet.classList.remove('active');
+    }
 
-    if (toggleKeyBtn && apiKeyInput) {
-        toggleKeyBtn.addEventListener('click', () => {
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                toggleKeyBtn.textContent = 'Скрыть';
+    if (openSettingsBtn) openSettingsBtn.addEventListener('click', openSettings);
+    if (drawerSettingsGearBtn) drawerSettingsGearBtn.addEventListener('click', openSettings);
+    if (closeSettingsSheetBtn) closeSettingsSheetBtn.addEventListener('click', closeSettings);
+    if (linkOpenSettings) linkOpenSettings.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
+
+    if (voiceRateInput && rateVal) {
+        voiceRateInput.addEventListener('input', (e) => {
+            rateVal.textContent = e.target.value + 'x';
+        });
+    }
+
+    // Avatar State Manager
+    function setOrbState(state) {
+        characterOrb.className = 'orb-sphere ' + state;
+        if (state === 'speaking') {
+            statusText.textContent = 'Nova говорит...';
+        } else if (state === 'listening') {
+            statusText.textContent = 'Слушаю вас (English)...';
+        } else if (state === 'thinking') {
+            statusText.textContent = 'Groq генерирует ответ...';
+        } else {
+            statusText.textContent = 'Готов к разговору';
+        }
+    }
+
+    // Text to Speech
+    window.speakTextFromEl = function(btn) {
+        if (!synth) return;
+        const bubble = btn.closest('.chat-bubble');
+        if (!bubble) return;
+        const textEl = bubble.querySelector('.bubble-assistant-content');
+        if (!textEl) return;
+
+        synth.cancel();
+        const rawText = textEl.innerText.replace(/Nova — это ИИ.*/, '');
+        const utterance = new SpeechSynthesisUtterance(rawText);
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.lang = 'en-US';
+        utterance.rate = voiceRateInput ? parseFloat(voiceRateInput.value) : 1.0;
+
+        utterance.onstart = () => {
+            isSpeaking = true;
+            setOrbState('speaking');
+        };
+        utterance.onend = () => {
+            isSpeaking = false;
+            setOrbState('idle');
+            // If live voice mode is on, start listening again automatically
+            if (isLiveModeActive) {
+                setTimeout(startListening, 300);
+            }
+        };
+        utterance.onerror = () => {
+            isSpeaking = false;
+            setOrbState('idle');
+        };
+
+        synth.speak(utterance);
+    };
+
+    // Copy Text Helper
+    window.copyTextFromEl = function(btn) {
+        const bubble = btn.closest('.chat-bubble');
+        if (!bubble) return;
+        const textEl = bubble.querySelector('.bubble-assistant-content');
+        if (!textEl) return;
+        navigator.clipboard.writeText(textEl.innerText).then(() => {
+            btn.style.color = '#34d399';
+            setTimeout(() => { btn.style.color = ''; }, 1200);
+        });
+    };
+
+    // Web Speech API: Speech-to-Text
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+        recognition = new SpeechRec();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            isListening = true;
+            voiceInputBtn.classList.add('active');
+            liveVoiceModeBtn.classList.add('active');
+            setOrbState('listening');
+        };
+
+        recognition.onresult = (e) => {
+            const transcript = e.results[0][0].transcript;
+            chatInput.value = transcript;
+            submitMessage(transcript);
+        };
+
+        recognition.onerror = (e) => {
+            console.error('Speech recognition error:', e.error);
+            stopListening();
+        };
+
+        recognition.onend = () => {
+            stopListening();
+        };
+    } else {
+        voiceInputBtn.title = 'Web Speech Recognition не поддерживается в этом браузере';
+    }
+
+    function startListening() {
+        if (!recognition) {
+            alert('Голосовой ввод поддерживается в Google Chrome, Microsoft Edge и Safari.');
+            return;
+        }
+        if (synth) synth.cancel();
+        try {
+            recognition.start();
+        } catch (e) {
+            // Already started
+        }
+    }
+
+    function stopListening() {
+        isListening = false;
+        voiceInputBtn.classList.remove('active');
+        if (!isLiveModeActive) liveVoiceModeBtn.classList.remove('active');
+        if (!isSpeaking) setOrbState('idle');
+    }
+
+    function toggleListening() {
+        if (isListening) {
+            recognition.stop();
+            stopListening();
+        } else {
+            startListening();
+        }
+    }
+
+    if (voiceInputBtn) voiceInputBtn.addEventListener('click', toggleListening);
+
+    // Live Voice Mode (Violet Wave Pill in Screenshots 3 & 4)
+    if (liveVoiceModeBtn) {
+        liveVoiceModeBtn.addEventListener('click', () => {
+            isLiveModeActive = !isLiveModeActive;
+            liveVoiceModeBtn.classList.toggle('active', isLiveModeActive);
+            if (isLiveModeActive) {
+                startListening();
             } else {
-                apiKeyInput.type = 'password';
-                toggleKeyBtn.textContent = 'Показать';
+                if (recognition) recognition.stop();
+                stopListening();
+                if (synth) synth.cancel();
             }
         });
     }
 
-    if (voiceRateRange) {
-        voiceRateRange.addEventListener('input', (e) => {
-            voiceRateVal.textContent = e.target.value + 'x';
+    // Quick Practice Topic Chips
+    document.querySelectorAll('.topic-chip, .topic-item').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeDrawer();
+            const prompt = chip.getAttribute('data-prompt');
+            chatInput.value = prompt;
+            submitMessage(prompt);
         });
-    }
-    if (voicePitchRange) {
-        voicePitchRange.addEventListener('input', (e) => {
-            voicePitchVal.textContent = e.target.value;
-        });
+    });
+
+    // Chat Form Submit
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (text) submitMessage(text);
+    });
+
+    // Submit Message to Flask Backend -> Groq API
+    async function submitMessage(text) {
+        chatInput.value = '';
+        appendMessage('user', text);
+        setOrbState('thinking');
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: text})
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                appendMessage('assistant', data.response);
+                const autoSpeakCheck = document.getElementById('auto_speak');
+                if ((autoSpeakCheck && autoSpeakCheck.checked) || isLiveModeActive) {
+                    const lastBubble = chatMessages.lastElementChild;
+                    const speakBtn = lastBubble ? lastBubble.querySelector('.speak-btn') : null;
+                    if (speakBtn) speakTextFromEl(speakBtn);
+                } else {
+                    setOrbState('idle');
+                }
+            } else {
+                setOrbState('idle');
+                if (data.error === 'api_key_missing') {
+                    appendMessage('assistant', `⚠️ <strong>Groq API Key не настроен:</strong> ${data.message} <br><button onclick="document.getElementById('open-settings-btn').click()" style="margin-top:8px; background: #6366f1; color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer;">Открыть настройки</button>`);
+                } else {
+                    appendMessage('assistant', `❌ <strong>Ошибка:</strong> ${data.message || 'Не удалось связаться с Groq'}`);
+                }
+            }
+        } catch (err) {
+            setOrbState('idle');
+            appendMessage('assistant', `❌ <strong>Ошибка сети:</strong> Проверьте подключение к интернету.`);
+        }
     }
 
-    // Toggle voice playback button in navbar
-    if (toggleVoiceBtn) {
-        toggleVoiceBtn.addEventListener('click', () => {
-            autoSpeak = !autoSpeak;
-            toggleVoiceBtn.classList.toggle('active', autoSpeak);
-            if (!autoSpeak && synth) synth.cancel();
-        });
+    function appendMessage(role, text) {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${role}`;
+
+        if (role === 'user') {
+            bubble.innerHTML = `<div class="bubble-user-content">${escapeHtml(text)}</div>`;
+        } else {
+            bubble.innerHTML = `
+                <div class="bubble-assistant-content">${formatMarkdown(text)}</div>
+                <div class="msg-actions-row">
+                    <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    </button>
+                    <button class="action-icon-btn" title="Скопировать" onclick="copyTextFromEl(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                </div>
+                <div class="ai-disclaimer">Nova — это ИИ-тьютор. Он может ошибаться.</div>
+            `;
+        }
+
+        chatMessages.appendChild(bubble);
+        contentArea.scrollTop = contentArea.scrollHeight;
     }
 
-    // Save Settings Form
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function formatMarkdown(text) {
+        return text
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/\\[Correction\\]:(.*?)(?=\\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
+            .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+            .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
+            .replace(/\\n\\n/g, '</p><p>')
+            .replace(/\\n/g, '<br>');
+    }
+
+    // Save Settings
     if (settingsForm) {
         settingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -108,12 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 english_level: formData.get('english_level'),
                 tutor_style: formData.get('tutor_style'),
                 voice_rate: parseFloat(formData.get('voice_rate')),
-                voice_pitch: parseFloat(formData.get('voice_pitch')),
                 auto_speak: formData.get('auto_speak') ? 1 : 0
             };
-
-            autoSpeak = !!payload.auto_speak;
-            if (toggleVoiceBtn) toggleVoiceBtn.classList.toggle('active', autoSpeak);
 
             try {
                 const res = await fetch('/api/settings', {
@@ -121,279 +334,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
                 if (res.ok) {
                     alert('Настройки успешно сохранены!');
-                    hideModal();
+                    closeSettings();
                 } else {
-                    alert('Ошибка сохранения: ' + (data.message || 'Неизвестная ошибка'));
+                    alert('Ошибка сохранения настроек');
                 }
             } catch (err) {
-                alert('Сетевая ошибка при сохранении настроек.');
+                alert('Сетевая ошибка');
             }
         });
     }
 
-    // Character State Visualizer
-    function setCharacterState(state) {
-        characterOrb.className = 'avatar-orb ' + state;
-        const badgeText = characterState.querySelector('.state-text');
-        const badgeIcon = characterState.querySelector('.state-icon');
-
-        if (state === 'speaking') {
-            badgeIcon.textContent = '🔊';
-            badgeText.textContent = 'Nova is speaking...';
-            waveVisualizer.classList.add('active');
-        } else if (state === 'listening') {
-            badgeIcon.textContent = '🎙️';
-            badgeText.textContent = 'Listening to you...';
-            waveVisualizer.classList.add('active');
-        } else if (state === 'thinking') {
-            badgeIcon.textContent = '⚡';
-            badgeText.textContent = 'Thinking with Groq...';
-            waveVisualizer.classList.add('active');
-        } else {
-            badgeIcon.textContent = '✨';
-            badgeText.textContent = 'Ready to talk';
-            waveVisualizer.classList.remove('active');
-        }
-    }
-
-    // Text to Speech (Voice Output)
-    window.speakText = function(btnOrText) {
-        if (!synth) {
-            console.warn('Speech synthesis not supported in this browser.');
-            return;
-        }
-
-        let text = '';
-        if (typeof btnOrText === 'string') {
-            text = btnOrText;
-        } else if (btnOrText && btnOrText.parentElement) {
-            const msgTextEl = btnOrText.parentElement.querySelector('.msg-text');
-            if (msgTextEl) text = msgTextEl.innerText;
-        }
-
-        if (!text) return;
-
-        synth.cancel(); // Stop any ongoing speech
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        if (selectedVoice) utterance.voice = selectedVoice;
-        utterance.lang = 'en-US';
-        utterance.rate = voiceRateRange ? parseFloat(voiceRateRange.value) : 1.0;
-        utterance.pitch = voicePitchRange ? parseFloat(voicePitchRange.value) : 1.0;
-
-        utterance.onstart = () => {
-            isSpeaking = true;
-            setCharacterState('speaking');
-        };
-
-        utterance.onend = () => {
-            isSpeaking = false;
-            setCharacterState('idle');
-        };
-
-        utterance.onerror = () => {
-            isSpeaking = false;
-            setCharacterState('idle');
-        };
-
-        synth.speak(utterance);
-    };
-
-    // Speech-to-Text (Voice Input via Web Speech API)
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-
-        recognition.onstart = () => {
-            isListening = true;
-            voiceInputBtn.classList.add('recording');
-            speechStatus.textContent = 'Recording speech... Speak clearly in English';
-            setCharacterState('listening');
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            chatInput.value = transcript;
-            speechStatus.textContent = 'Voice captured! Sending...';
-            sendMessage(transcript);
-        };
-
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            speechStatus.textContent = 'Microphone error: ' + event.error;
-            stopListening();
-        };
-
-        recognition.onend = () => {
-            stopListening();
-        };
-    } else {
-        voiceInputBtn.title = 'Speech Recognition is not supported by your browser (use Chrome/Edge/Safari)';
-        speechStatus.textContent = 'Voice input: Web Speech API unavailable in this browser';
-    }
-
-    function toggleListening() {
-        if (!recognition) {
-            alert('Голосовой ввод не поддерживается данным браузером. Рекомендуем использовать Google Chrome или Edge.');
-            return;
-        }
-        if (isListening) {
-            recognition.stop();
-            stopListening();
-        } else {
-            if (synth) synth.cancel();
-            recognition.start();
-        }
-    }
-
-    function stopListening() {
-        isListening = false;
-        voiceInputBtn.classList.remove('recording');
-        speechStatus.textContent = 'Microphone: Ready';
-        if (!isSpeaking) setCharacterState('idle');
-    }
-
-    if (voiceInputBtn) {
-        voiceInputBtn.addEventListener('click', toggleListening);
-    }
-
-    // Quick Practice Topics Click
-    document.querySelectorAll('.topic-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-            const prompt = pill.getAttribute('data-prompt');
-            chatInput.value = prompt;
-            sendMessage(prompt);
+    // Clear History Action
+    if (clearHistoryRow) {
+        clearHistoryRow.addEventListener('click', async () => {
+            if (confirm('Очистить историю диалогов?')) {
+                await fetch('/api/chat/clear', {method: 'POST'});
+                chatMessages.innerHTML = `
+                    <div class="chat-bubble assistant">
+                        <div class="bubble-assistant-content">
+                            <p>История очищена. О чем ты хочешь поговорить сегодня?</p>
+                        </div>
+                    </div>
+                `;
+                closeSettings();
+            }
         });
-    });
+    }
 
-    // Auto-expand textarea
-    chatInput.addEventListener('input', () => {
-        chatInput.style.height = 'auto';
-        chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-    });
-
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+    // New Chat Drawer Item
+    const newChatDrawerBtn = document.getElementById('new-chat-drawer-btn');
+    if (newChatDrawerBtn) {
+        newChatDrawerBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const text = chatInput.value.trim();
-            if (text) sendMessage(text);
-        }
-    });
-
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = chatInput.value.trim();
-        if (text) sendMessage(text);
-    });
-
-    // Send Message Logic
-    async function sendMessage(messageText) {
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
-
-        // Append user message to chat UI
-        appendMessage('user', messageText);
-        setCharacterState('thinking');
-
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: messageText})
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                appendMessage('assistant', data.response);
-                if (autoSpeak) {
-                    speakText(data.response);
-                } else {
-                    setCharacterState('idle');
-                }
-            } else {
-                setCharacterState('idle');
-                if (data.error === 'api_key_missing') {
-                    appendMessage('assistant', `⚠️ <strong>Groq API Key отсутствует:</strong> ${data.message} <br><button class="btn btn-secondary btn-sm" onclick="document.getElementById('open-settings-btn').click()" style="margin-top:8px;">Открыть Настройки</button>`);
-                } else {
-                    appendMessage('assistant', `❌ <strong>Ошибка:</strong> ${data.message || 'Не удалось получить ответ от Groq'}`);
-                }
-            }
-        } catch (err) {
-            setCharacterState('idle');
-            appendMessage('assistant', `❌ <strong>Сетевая ошибка:</strong> Не удалось связаться с сервером.`);
-        }
-    }
-
-    // Append Message to UI
-    function appendMessage(role, content) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
-
-        const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        let avatarHtml = '';
-        if (role === 'assistant') {
-            avatarHtml = '<div class="avatar-glow"></div>';
-        } else {
-            avatarHtml = '<div class="user-avatar-circle">U</div>';
-        }
-
-        let speakBtnHtml = '';
-        if (role === 'assistant') {
-            speakBtnHtml = `
-                <button class="speak-msg-btn" title="Озвучить ответ" onclick="speakText(this)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                    <span>Слушать</span>
-                </button>
-            `;
-        }
-
-        msgDiv.innerHTML = `
-            <div class="msg-avatar">${avatarHtml}</div>
-            <div class="msg-body">
-                <div class="msg-header">
-                    <span class="sender-name">${role === 'user' ? 'You' : 'Nova'}</span>
-                    <span class="msg-time">${timeStr}</span>
-                </div>
-                <div class="msg-text">${formatMessageText(content)}</div>
-                ${speakBtnHtml}
-            </div>
-        `;
-
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    function formatMessageText(text) {
-        // Convert basic markdown tags to HTML
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-            .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
-            .replace(/\\[Correction\\]:(.*?)(?=\\n|$)/g, '<div class="grammar-correction-card">💡 <strong>Correction:</strong>$1</div>')
-            .replace(/\\n/g, '<br>');
-    }
-
-    // Clear Chat
-    if (clearChatBtn) {
-        clearChatBtn.addEventListener('click', async () => {
-            if (confirm('Вы уверены, что хотите очистить историю чата?')) {
-                try {
-                    await fetch('/api/chat/clear', {method: 'POST'});
-                    chatMessages.innerHTML = '';
-                    appendMessage('assistant', "Conversation history cleared! Let's start fresh. What would you like to talk about today?");
-                } catch (e) {
-                    console.error(e);
-                }
-            }
+            closeDrawer();
+            chatInput.focus();
         });
     }
 });
