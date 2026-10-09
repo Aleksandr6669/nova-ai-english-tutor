@@ -583,12 +583,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatMarkdown(t) {
-        return t
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/\[Correction\]:(.*?)(?=\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n\n/g, '</p><p>')
-            .replace(/\n/g, '<br>');
+        if (!t) return '';
+        let out = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        out = out.replace(/\[Correction\]:\s*(.*?)(?=\n|$)/g, '<div class="correction-block"><strong>Correction:</strong> $1</div>');
+        out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        out = out.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
+        out = out.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+        return out;
     }
 });
