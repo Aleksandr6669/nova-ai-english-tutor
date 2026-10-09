@@ -59,7 +59,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS user_settings (
             user_id INTEGER PRIMARY KEY,
             groq_api_key TEXT DEFAULT "",
-            model_name TEXT DEFAULT "llama-3.3-70b-versatile",
+            model_name TEXT DEFAULT "openai/gpt-oss-120b",
             english_level TEXT DEFAULT "intermediate",
             tutor_style TEXT DEFAULT "friendly",
             voice_rate REAL DEFAULT 1.0,
@@ -83,10 +83,17 @@ def init_db():
         )
     ''')
     
+    # Migrate older schemas if needed
     try:
         cursor.execute('ALTER TABLE user_settings ADD COLUMN voice_lang TEXT DEFAULT "ru-RU"')
     except Exception:
         pass
+
+    try:
+        cursor.execute("UPDATE user_settings SET model_name = 'openai/gpt-oss-120b' WHERE model_name IN ('llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it')")
+    except Exception:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -166,7 +173,7 @@ def get_user_settings(user_id):
     if not settings:
         return {
             "groq_api_key": "",
-            "model_name": "llama-3.3-70b-versatile",
+            "model_name": "openai/gpt-oss-120b",
             "english_level": "intermediate",
             "tutor_style": "friendly",
             "voice_rate": 1.0,
@@ -215,7 +222,8 @@ def update_user_settings(user_id, groq_api_key=None, model_name=None, english_le
     if updates:
         params.append(user_id)
         cursor.execute(f"UPDATE user_settings SET {', '.join(updates)} WHERE user_id = ?", params)
-        conn.commit()
+        
+    conn.commit()
     conn.close()
 
 def save_chat_message(user_id, role, content, corrections=None):
