@@ -173,21 +173,18 @@ input, textarea, select, button {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px 16px 110px 16px;
+    padding: 12px 16px calc(125px + env(safe-area-inset-bottom, 0px)) 16px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
 }
 
 .content-area::-webkit-scrollbar {
-    width: 4px;
-}
-
-.content-area::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+    width: 0;
+    display: none;
 }
 
 /* ========================================================
@@ -198,14 +195,14 @@ input, textarea, select, button {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 18px 0 10px 0;
+    padding: 10px 0 6px 0;
     flex-shrink: 0;
 }
 
 .orb-container {
     position: relative;
-    width: 110px;
-    height: 110px;
+    width: 90px;
+    height: 90px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -214,41 +211,42 @@ input, textarea, select, button {
 
 .orb-glow {
     position: absolute;
-    width: 140px;
-    height: 140px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(6, 182, 212, 0.15) 50%, transparent 70%);
-    filter: blur(18px);
-    animation: glowPulse 4s infinite ease-in-out;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+    filter: blur(14px);
+    transition: all 0.4s ease;
 }
 
 .orb-sphere {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #818cf8, #4f46e5 50%, #1e1b4b 100%);
-    box-shadow: 0 0 35px rgba(99, 102, 241, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.4);
     position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #818cf8 0%, #4f46e5 50%, #1e1b4b 100%);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: orbFloat 5s infinite ease-in-out;
+    animation: orbFloat 4s infinite ease-in-out;
+    transition: all 0.3s ease;
 }
 
 .orb-inner {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: radial-gradient(circle, #ffffff 0%, rgba(255, 255, 255, 0.3) 80%, transparent 100%);
+    background: #ffffff;
+    box-shadow: 0 0 10px #ffffff;
     filter: blur(1px);
-    animation: innerPulse 2.5s infinite ease-in-out;
+    animation: corePulse 2s infinite ease-in-out;
 }
 
 .orb-ring {
     position: absolute;
-    width: 96px;
-    height: 96px;
+    width: 82px;
+    height: 82px;
     border-radius: 50%;
     border: 1.5px solid rgba(165, 180, 252, 0.3);
     border-top-color: rgba(255, 255, 255, 0.8);
@@ -276,15 +274,15 @@ input, textarea, select, button {
 }
 
 .character-tag {
-    margin-top: 12px;
-    font-size: 13px;
+    margin-top: 8px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
     display: inline-flex;
     align-items: center;
     gap: 6px;
     background: rgba(255, 255, 255, 0.05);
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: var(--radius-pill);
     border: 1px solid var(--border-subtle);
 }
@@ -300,7 +298,7 @@ input, textarea, select, button {
 /* Animations */
 @keyframes orbFloat {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
+    50% { transform: translateY(-4px); }
 }
 
 @keyframes glowPulse {
@@ -313,9 +311,9 @@ input, textarea, select, button {
     to { transform: rotate(360deg); }
 }
 
-@keyframes innerPulse {
-    0%, 100% { transform: scale(0.9); opacity: 0.7; }
-    50% { transform: scale(1.2); opacity: 1; }
+@keyframes corePulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
 }
 
 @keyframes listeningPulse {
@@ -489,7 +487,7 @@ input, textarea, select, button {
 }
 
 /* ========================================================
-   FLOATING BOTTOM DOCK & PILL INPUT BAR
+   FLOATING BOTTOM INPUT DOCK (Exact Gemini Mobile Style)
    ======================================================== */
 .bottom-dock {
     position: fixed;
@@ -498,10 +496,12 @@ input, textarea, select, button {
     right: 0;
     max-width: 480px;
     margin: 0 auto;
-    padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.98) 60%, rgba(0, 0, 0, 0) 100%);
-    z-index: 30;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)) 14px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 35%, #000000 100%);
     pointer-events: none;
+    z-index: 30;
 }
 
 @media (min-width: 900px) {
@@ -512,26 +512,29 @@ input, textarea, select, button {
 
 .floating-pill-bar {
     pointer-events: auto;
-    height: 54px;
-    background: var(--bg-pill);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    height: 52px;
+    background: #1e1e22;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-pill);
+    padding: 0 6px 0 12px;
     display: flex;
     align-items: center;
-    padding: 4px 6px 4px 8px;
-    gap: 8px;
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-    transition: border-color 0.2s ease, background 0.2s ease;
+    gap: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.65);
+    overflow: hidden;
 }
 
 .floating-pill-bar:focus-within {
-    border-color: rgba(255, 255, 255, 0.25);
-    background: var(--bg-pill-hover);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: #25252a;
 }
 
 .pill-add-btn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-pill);
     background: none;
     border: none;
@@ -543,60 +546,30 @@ input, textarea, select, button {
     flex-shrink: 0;
 }
 
+.pill-add-btn:active {
+    transform: scale(0.92);
+}
+
 .pill-add-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
 }
 
 .pill-input {
     flex: 1;
+    min-width: 0;
+    width: 0;
     background: transparent;
     border: none;
     outline: none;
     color: var(--text-primary);
     font-size: 16px !important;
-    padding: 6px 0;
+    padding: 8px 2px;
+    margin: 0;
 }
 
 .pill-input::placeholder {
     color: var(--text-muted);
-}
-
-.pill-lang-btn {
-    height: 28px;
-    padding: 0 9px;
-    border-radius: var(--radius-pill);
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    font-size: 12px !important;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-.pill-lang-btn:hover, .pill-lang-btn:active {
-    background: var(--bg-card-hover);
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.25);
-}
-
-.pill-lang-btn.ru {
-    color: #60a5fa;
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(96, 165, 250, 0.1);
-}
-
-.pill-lang-btn.en {
-    color: #a78bfa;
-    border-color: rgba(167, 139, 250, 0.4);
-    background: rgba(167, 139, 250, 0.1);
 }
 
 .pill-mic-btn {
@@ -611,6 +584,10 @@ input, textarea, select, button {
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
+}
+
+.pill-mic-btn:active {
+    transform: scale(0.92);
 }
 
 .pill-mic-btn.active {
@@ -629,13 +606,14 @@ input, textarea, select, button {
     justify-content: center;
     gap: 3px;
     width: 44px;
-    height: 40px;
+    height: 38px;
     border-radius: var(--radius-pill);
     background: var(--accent-voice-pill);
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: transform 0.15s ease;
+    margin-right: 2px;
 }
 
 .voice-wave-pill:active {
@@ -651,8 +629,8 @@ input, textarea, select, button {
 }
 
 .voice-wave-pill span:nth-child(2) { height: 18px; }
-.voice-wave-pill span:nth-child(3) { height: 15px; }
-.voice-wave-pill span:nth-child(4) { height: 9px; }
+.voice-wave-pill span:nth-child(3) { height: 14px; }
+.voice-wave-pill span:nth-child(4) { height: 8px; }
 
 .voice-wave-pill.active {
     background: var(--accent-voice-active);

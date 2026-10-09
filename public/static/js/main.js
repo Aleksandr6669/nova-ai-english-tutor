@@ -24,8 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceRateInput = document.getElementById('voice_rate');
     const rateVal = document.getElementById('rate-val');
     const clearHistoryRow = document.getElementById('clear-history-row');
-    const voiceLangBtn = document.getElementById('voice-lang-btn');
-    const voiceLangLabel = document.getElementById('voice-lang-label');
+    const drawerLangToggle = document.getElementById('drawer-lang-toggle');
+    const drawerLangVal = document.getElementById('drawer-lang-val');
+    const voiceLangSelect = document.getElementById('voice_lang');
 
     // Speech & Voice State
     let isSpeaking = false;
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let enVoice = null;
     let ruVoice = null;
     let recognition = null;
-    let currentVoiceLang = localStorage.getItem('nova_voice_lang') || 'en-US';
+    let currentVoiceLang = localStorage.getItem('nova_voice_lang') || 'ru-RU';
 
     // Initialize English and Russian Voices
     function initVoices() {
@@ -67,11 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateVoiceLangUI() {
         const isRu = currentVoiceLang.startsWith('ru');
-        if (voiceLangBtn) {
-            voiceLangBtn.className = 'pill-lang-btn ' + (isRu ? 'ru' : 'en');
+        if (drawerLangVal) {
+            drawerLangVal.textContent = isRu ? 'Русский (RU)' : 'English (EN)';
+            drawerLangVal.style.color = isRu ? '#60a5fa' : '#a78bfa';
         }
-        if (voiceLangLabel) {
-            voiceLangLabel.textContent = isRu ? 'RU' : 'EN';
+        if (voiceLangSelect) {
+            voiceLangSelect.value = currentVoiceLang;
         }
         if (recognition) {
             recognition.lang = currentVoiceLang;
@@ -174,10 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Speech Recognition Lang Toggle Button
-    if (voiceLangBtn) {
-        voiceLangBtn.addEventListener('click', () => {
-            currentVoiceLang = currentVoiceLang.startsWith('en') ? 'ru-RU' : 'en-US';
+    // Speech Recognition Lang Toggle in Drawer & Settings
+    if (drawerLangToggle) {
+        drawerLangToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentVoiceLang = currentVoiceLang.startsWith('ru') ? 'en-US' : 'ru-RU';
             localStorage.setItem('nova_voice_lang', currentVoiceLang);
             updateVoiceLangUI();
             const langName = currentVoiceLang.startsWith('ru') ? 'Русский (RU)' : 'English (EN)';
@@ -187,6 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!isListening && !isSpeaking) statusText.textContent = 'Готов к разговору';
                 }, 1600);
             }
+            closeDrawer();
+        });
+    }
+
+    if (voiceLangSelect) {
+        voiceLangSelect.addEventListener('change', (e) => {
+            currentVoiceLang = e.target.value;
+            localStorage.setItem('nova_voice_lang', currentVoiceLang);
+            updateVoiceLangUI();
         });
     }
     updateVoiceLangUI();
@@ -419,7 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 english_level: document.getElementById('english_level').value,
                 tutor_style: document.getElementById('tutor_style').value,
                 voice_rate: document.getElementById('voice_rate').value,
-                auto_speak: document.getElementById('auto_speak').checked
+                auto_speak: document.getElementById('auto_speak').checked,
+                voice_lang: document.getElementById('voice_lang').value
             };
 
             try {
