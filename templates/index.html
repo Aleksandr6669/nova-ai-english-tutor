@@ -99,12 +99,7 @@
             </button>
 
             <!-- Input Box -->
-            <input type="text" id="chat-input" class="pill-input" placeholder="Напишите на русском или английском..." autocomplete="off">
-
-            <!-- Mic Language Switcher (EN / RU) -->
-            <button type="button" class="pill-lang-btn en" id="voice-lang-btn" title="Язык микрофона: нажмите для переключения EN / RU">
-                <span id="voice-lang-label">EN</span>
-            </button>
+            <input type="text" id="chat-input" class="pill-input" placeholder="Опишите задачу или начните говорить..." autocomplete="off">
 
             <!-- Mic Input Button (Speech-to-Text) -->
             <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод">
@@ -136,6 +131,10 @@
             <a href="#" class="drawer-item" id="drawer-voice-toggle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 <span>Голосовой режим</span>
+            </a>
+            <a href="#" class="drawer-item" id="drawer-lang-toggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>Язык микрофона: <strong id="drawer-lang-val" style="color: #60a5fa;">Русский</strong></span>
             </a>
             <a href="{{ url_for('standalone') }}" class="drawer-item" target="_blank">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -209,6 +208,14 @@
                         <span class="inset-title" style="font-size: 14px;">Автоматическая озвучка ответов</span>
                         <input type="checkbox" id="auto_speak" name="auto_speak" style="width: 20px; height: 20px; accent-color: var(--accent-indigo);" {% if settings['auto_speak'] %}checked{% endif %}>
                     </div>
+                </div>
+
+                <div class="inset-control-wrap">
+                    <label class="inset-label" for="voice_lang">Язык микрофона (распознавание речи)</label>
+                    <select id="voice_lang" name="voice_lang" class="dark-select">
+                        <option value="ru-RU" {% if settings['voice_lang'] == 'ru-RU' %}selected{% endif %}>Русский (ru-RU) — говорить на русском</option>
+                        <option value="en-US" {% if settings['voice_lang'] == 'en-US' %}selected{% endif %}>English (en-US) — говорить на английском</option>
+                    </select>
                 </div>
 
                 <div class="inset-control-wrap">

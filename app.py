@@ -141,7 +141,8 @@ def save_settings():
         tutor_style=data.get('tutor_style'),
         voice_rate=data.get('voice_rate'),
         voice_pitch=data.get('voice_pitch'),
-        auto_speak=data.get('auto_speak')
+        auto_speak=data.get('auto_speak'),
+        voice_lang=data.get('voice_lang')
     )
     return jsonify({"status": "success", "message": "Настройки сохранены"})
 

@@ -65,6 +65,7 @@ def init_db():
             voice_rate REAL DEFAULT 1.0,
             voice_pitch REAL DEFAULT 1.0,
             auto_speak INTEGER DEFAULT 1,
+            voice_lang TEXT DEFAULT "ru-RU",
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         )
     ''')
@@ -82,6 +83,10 @@ def init_db():
         )
     ''')
     
+    try:
+        cursor.execute('ALTER TABLE user_settings ADD COLUMN voice_lang TEXT DEFAULT "ru-RU"')
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -166,11 +171,12 @@ def get_user_settings(user_id):
             "tutor_style": "friendly",
             "voice_rate": 1.0,
             "voice_pitch": 1.0,
-            "auto_speak": 1
+            "auto_speak": 1,
+            "voice_lang": "ru-RU"
         }
     return dict(settings)
 
-def update_user_settings(user_id, groq_api_key=None, model_name=None, english_level=None, tutor_style=None, voice_rate=None, voice_pitch=None, auto_speak=None):
+def update_user_settings(user_id, groq_api_key=None, model_name=None, english_level=None, tutor_style=None, voice_rate=None, voice_pitch=None, auto_speak=None, voice_lang=None):
     init_db()
     conn = get_db()
     cursor = conn.cursor()
@@ -202,6 +208,9 @@ def update_user_settings(user_id, groq_api_key=None, model_name=None, english_le
     if auto_speak is not None:
         updates.append("auto_speak = ?")
         params.append(1 if auto_speak else 0)
+    if voice_lang is not None:
+        updates.append("voice_lang = ?")
+        params.append(voice_lang)
         
     if updates:
         params.append(user_id)
