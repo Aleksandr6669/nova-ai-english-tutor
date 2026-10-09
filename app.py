@@ -63,6 +63,10 @@ def standalone():
         return send_from_directory(BASE_DIR, 'english_ai_tutor.html')
     return redirect(url_for('index'))
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'static'), filename)
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if 'user_id' in session:
@@ -204,6 +208,12 @@ def clear_chat():
         return jsonify({"error": "Unauthorized"}), 401
     db.clear_chat_history(session['user_id'])
     return jsonify({"status": "success", "message": "История очищена"})
+
+@app.errorhandler(404)
+def not_found(e):
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     print("Starting English AI Tutor Flask Server on http://127.0.0.1:5000 ...")
