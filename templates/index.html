@@ -37,11 +37,11 @@
 
         <!-- Quick Topics Carousel -->
         <section class="topics-scroll">
-            <button class="topic-chip" data-prompt="Привет Nova! Давай поговорим на английском на свободную тему, помоги мне попрактиковаться.">💬 Free Talk</button>
-            <button class="topic-chip" data-prompt="Как правильно заказать кофе и завтрак в Лондоне? Давай разыграем диалог.">☕ Coffee Shop</button>
-            <button class="topic-chip" data-prompt="Объясни простыми словами разницу между Present Perfect и Past Simple с жизненными примерами.">📚 Grammar Tip</button>
-            <button class="topic-chip" data-prompt="Научи меня 3 классным современным идиомам с переводом и примерами диалогов.">🎯 Idioms</button>
-            <button class="topic-chip" data-prompt="Подготовь меня к собеседованию на английском. Задай 3 типичных вопроса и разбери мои ответы.">💼 Job Interview</button>
+            <button class="topic-chip" data-prompt="Hi Nova! Let's have a friendly spoken conversation in English to practice my everyday speaking skills.">💬 Free Talk</button>
+            <button class="topic-chip" data-prompt="Let's roleplay: You are a barista in London, and I am a customer ordering coffee and breakfast.">☕ Coffee Shop</button>
+            <button class="topic-chip" data-prompt="Can you explain when to use Present Perfect vs Past Simple with real-life examples?">📚 Grammar Tip</button>
+            <button class="topic-chip" data-prompt="Teach me 3 natural modern English idioms with meanings and sample dialogs.">🎯 Idioms</button>
+            <button class="topic-chip" data-prompt="I have a job interview in English. Ask me 3 typical behavioral questions and review my answers.">💼 Job Interview</button>
         </section>
 
         <!-- Messages Stream -->
@@ -50,7 +50,7 @@
             <div class="chat-bubble assistant">
                 <div class="bubble-assistant-content">
                     <p>Привет, <strong>{{ user['username'] }}</strong>! 👋 Я <strong>Nova</strong> — твой персональный AI-тьютор английского языка на базе моделей <strong>Groq</strong>.</p>
-                    <p>Я свободно понимаю и русский, и английский язык. Ты можешь писать или говорить со мной на любом языке — я помогу заговорить на английском, объясню любые правила и разберу ошибки.</p>
+                    <p>Мы можем общаться голосом или текстом. Я помогу тебе свободно заговорить на английском, объясню правила и разберу любые ошибки в речи.</p>
                     {% if not settings['groq_api_key'] %}
                     <div class="correction-block" style="border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
                         <strong style="color: #fbbf24;">Подсказка:</strong> Для общения укажи свой бесплатный <strong>Groq API ключ</strong> в <a href="#" id="link-open-settings" style="color: #60a5fa; text-decoration: underline;">Настройках</a>.
@@ -102,18 +102,20 @@
             <input type="text" id="chat-input" class="pill-input" placeholder="Опишите задачу или начните говорить..." autocomplete="off">
 
             <!-- Mic Input Button (Speech-to-Text) -->
-            <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Голосовой ввод">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <button type="button" class="pill-mic-btn" id="voice-input-btn" title="Диктовка: сказать и отправить">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
 
             <!-- Live Voice Waveform Button -->
-            <button type="button" class="voice-wave-pill" id="live-voice-mode-btn" title="Живой голосовой диалог">
+            <button type="button" class="voice-wave-pill" id="live-voice-mode-btn" title="Режим живого голосового разговора (Hands-free)">
                 <span></span><span></span><span></span><span></span>
             </button>
         </form>
     </footer>
 
-    <!-- DRAWER / SIDEBAR MENU -->
+    <!-- ========================================================
+         DRAWER / SIDEBAR MENU
+         ======================================================== -->
     <div class="drawer-backdrop" id="drawer-backdrop"></div>
     <aside class="drawer-panel" id="drawer-panel">
         <div class="drawer-top">
@@ -142,15 +144,15 @@
             </a>
 
             <div class="drawer-section-title">ПРАКТИКА ЯЗЫКА</div>
-            <a href="#" class="drawer-item topic-item" data-prompt="Давай попрактикуем свободный разговор на английском на тему путешествий и культур.">
+            <a href="#" class="drawer-item topic-item" data-prompt="Let's practice conversational fluency on travel and culture.">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                 <span>Разговорная речь</span>
             </a>
-            <a href="#" class="drawer-item topic-item" data-prompt="Проведи для меня тест по грамматике: условные предложения (Conditionals). Объясняй ошибки на русском.">
+            <a href="#" class="drawer-item topic-item" data-prompt="Give me a comprehensive grammar quiz on conditional sentences (Zero, First, Second, Third).">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span>Грамматический тест</span>
             </a>
-            <a href="#" class="drawer-item topic-item" data-prompt="Давай проведем симуляцию IELTS Speaking Part 2. Дай мне тему карточки.">
+            <a href="#" class="drawer-item topic-item" data-prompt="Let's simulate an IELTS Speaking Part 2 interview. Give me a topic and time me.">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>IELTS / TOEFL Тренинг</span>
             </a>
@@ -173,7 +175,9 @@
         </div>
     </aside>
 
-    <!-- SETTINGS SCREEN -->
+    <!-- ========================================================
+         SETTINGS SCREEN (Inset Grouped Style)
+         ======================================================== -->
     <div class="settings-sheet" id="settings-sheet">
         <div class="sheet-header">
             <h2>Настройки</h2>
@@ -186,12 +190,14 @@
             <!-- Group 1: AI МОДЕЛЬ & GROQ -->
             <div class="settings-section-title">Groq AI & Модель</div>
             <div class="inset-card">
+                <!-- Groq API Key Input -->
                 <div class="inset-control-wrap">
                     <label class="inset-label" for="groq_api_key">Groq API Ключ</label>
                     <input type="password" id="groq_api_key" name="groq_api_key" class="dark-input" value="{{ settings['groq_api_key'] }}" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx">
                     <span style="font-size: 11px; color: var(--text-dim); display: block; margin-top: 4px;">Ключ можно получить бесплатно на <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-blue);">console.groq.com</a></span>
                 </div>
 
+                <!-- Model Picker -->
                 <div class="inset-control-wrap">
                     <label class="inset-label" for="model_name">Модель</label>
                     <select id="model_name" name="model_name" class="dark-select">
@@ -203,6 +209,7 @@
                     </select>
                 </div>
 
+                <!-- Voice / TTS Row -->
                 <div class="inset-control-wrap">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="inset-title" style="font-size: 14px;">Автоматическая озвучка ответов</span>
@@ -210,6 +217,7 @@
                     </div>
                 </div>
 
+                <!-- Voice Recognition Lang -->
                 <div class="inset-control-wrap">
                     <label class="inset-label" for="voice_lang">Язык микрофона (распознавание речи)</label>
                     <select id="voice_lang" name="voice_lang" class="dark-select">
@@ -218,6 +226,7 @@
                     </select>
                 </div>
 
+                <!-- Speed / Rate -->
                 <div class="inset-control-wrap">
                     <label class="inset-label">Скорость речи: <span id="rate-val">{{ settings['voice_rate'] }}x</span></label>
                     <input type="range" id="voice_rate" name="voice_rate" min="0.75" max="1.25" step="0.05" value="{{ settings['voice_rate'] }}" style="width: 100%; accent-color: var(--accent-indigo);">
