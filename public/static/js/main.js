@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceRateInput = document.getElementById('voice_rate');
     const rateVal = document.getElementById('rate-val');
     const clearHistoryRow = document.getElementById('clear-history-row');
+    const voiceLangBtn = document.getElementById('voice-lang-btn');
+    const voiceLangLabel = document.getElementById('voice-lang-label');
 
     // Speech & Voice State
     let isSpeaking = false;
@@ -31,19 +33,49 @@ document.addEventListener('DOMContentLoaded', () => {
     let isLiveModeActive = false;
     let synth = window.speechSynthesis;
     let selectedVoice = null;
+    let enVoice = null;
+    let ruVoice = null;
     let recognition = null;
+    let currentVoiceLang = localStorage.getItem('nova_voice_lang') || 'en-US';
 
-    // Initialize English Voices
+    // Initialize English and Russian Voices
     function initVoices() {
         if (!synth) return;
         const voices = synth.getVoices();
-        selectedVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Alex')))
-                     || voices.find(v => v.lang.startsWith('en'))
-                     || voices[0];
+        enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Alex')))
+               || voices.find(v => v.lang.startsWith('en'))
+               || voices[0];
+
+        ruVoice = voices.find(v => v.lang.startsWith('ru') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Milena') || v.name.includes('Yuri') || v.name.includes('Tatyana')))
+               || voices.find(v => v.lang.startsWith('ru'));
+
+        selectedVoice = enVoice;
     }
     initVoices();
     if (synth && synth.onvoiceschanged !== undefined) {
         synth.onvoiceschanged = initVoices;
+    }
+
+    function getVoiceConfig(text) {
+        const cyrillic = (text.match(/[\u0400-\u04FF]/g) || []).length;
+        const latin = (text.match(/[a-zA-Z]/g) || []).length;
+        if (cyrillic > latin && ruVoice) {
+            return { voice: ruVoice, lang: 'ru-RU' };
+        }
+        return { voice: enVoice || selectedVoice, lang: 'en-US' };
+    }
+
+    function updateVoiceLangUI() {
+        const isRu = currentVoiceLang.startsWith('ru');
+        if (voiceLangBtn) {
+            voiceLangBtn.className = 'pill-lang-btn ' + (isRu ? 'ru' : 'en');
+        }
+        if (voiceLangLabel) {
+            voiceLangLabel.textContent = isRu ? 'RU' : 'EN';
+        }
+        if (recognition) {
+            recognition.lang = currentVoiceLang;
+        }
     }
 
     // Drawer Open/Close
@@ -87,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state === 'speaking') {
             statusText.textContent = 'Nova говорит...';
         } else if (state === 'listening') {
-            statusText.textContent = 'Слушаю вас (English)...';
+            statusText.textContent = currentVoiceLang.startsWith('ru') ? 'Слушаю вас (Русский)...' : 'Слушаю вас (English)...';
         } else if (state === 'thinking') {
             statusText.textContent = 'Генерация ответа...';
         } else {
@@ -105,9 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         synth.cancel();
         const rawText = textEl.innerText.replace(/Nova AI —.*/, '').replace(/\[Correction\].*/, '');
+        const config = getVoiceConfig(rawText);
         const utterance = new SpeechSynthesisUtterance(rawText);
-        if (selectedVoice) utterance.voice = selectedVoice;
-        utterance.lang = 'en-US';
+        if (config.voice) utterance.voice = config.voice;
+        utterance.lang = config.lang;
         utterance.rate = voiceRateInput ? parseFloat(voiceRateInput.value) : 1.0;
 
         utterance.onstart = () => {
@@ -141,11 +174,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Speech Recognition Lang Toggle Button
+    if (voiceLangBtn) {
+        voiceLangBtn.addEventListener('click', () => {
+            currentVoiceLang = currentVoiceLang.startsWith('en') ? 'ru-RU' : 'en-US';
+            localStorage.setItem('nova_voice_lang', currentVoiceLang);
+            updateVoiceLangUI();
+            const langName = currentVoiceLang.startsWith('ru') ? 'Русский (RU)' : 'English (EN)';
+            if (statusText && !isListening && !isSpeaking) {
+                statusText.textContent = 'Микрофон: ' + langName;
+                setTimeout(() => {
+                    if (!isListening && !isSpeaking) statusText.textContent = 'Готов к разговору';
+                }, 1600);
+            }
+        });
+    }
+    updateVoiceLangUI();
+
     // Web Speech API: Speech-to-Text
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRec) {
         recognition = new SpeechRec();
-        recognition.lang = 'en-US';
+        recognition.lang = currentVoiceLang;
         recognition.continuous = false;
         recognition.interimResults = false;
 
@@ -179,11 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Голосовой ввод поддерживается в Google Chrome, Microsoft Edge и Safari.');
             return;
         }
-        if (synth) synth.cancel();
+        if (synth && synth.speaking) {
+            synth.cancel();
+            isSpeaking = false;
+        }
+        recognition.lang = currentVoiceLang;
         try {
             recognition.start();
         } catch (e) {
-            // Already active
+            console.warn('Recognition start error:', e);
         }
     }
 
@@ -194,19 +248,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isSpeaking) setOrbState('idle');
     }
 
-    function toggleListening() {
-        if (isListening) {
-            recognition.stop();
-            stopListening();
-        } else {
-            startListening();
-        }
+    if (voiceInputBtn) {
+        voiceInputBtn.addEventListener('click', () => {
+            if (isListening) {
+                recognition.stop();
+                stopListening();
+            } else {
+                startListening();
+            }
+        });
     }
 
-    if (voiceInputBtn) voiceInputBtn.addEventListener('click', toggleListening);
-    if (characterOrb) characterOrb.addEventListener('click', toggleListening);
-
-    // Live Voice Mode (Waveform Button)
     if (liveVoiceModeBtn) {
         liveVoiceModeBtn.addEventListener('click', () => {
             isLiveModeActive = !isLiveModeActive;
@@ -225,75 +277,38 @@ document.addEventListener('DOMContentLoaded', () => {
         drawerVoiceToggle.addEventListener('click', (e) => {
             e.preventDefault();
             closeDrawer();
-            toggleListening();
+            startListening();
         });
     }
 
-    // Quick Practice Topic Chips
-    document.querySelectorAll('.topic-chip, .topic-item').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            e.preventDefault();
-            closeDrawer();
-            const prompt = chip.getAttribute('data-prompt');
-            chatInput.value = prompt;
-            submitMessage(prompt);
-        });
-    });
-
-    // Chat Form Submit
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = chatInput.value.trim();
-        if (text) submitMessage(text);
-    });
-
-    // Submit Message to Flask Backend -> Groq API
-    async function submitMessage(text) {
-        chatInput.value = '';
-        appendMessage('user', text);
-        setOrbState('thinking');
-
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: text})
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                appendMessage('assistant', data.response);
-                const autoSpeakCheck = document.getElementById('auto_speak');
-                if ((autoSpeakCheck && autoSpeakCheck.checked) || isLiveModeActive) {
-                    const lastBubble = chatMessages.lastElementChild;
-                    const speakBtn = lastBubble ? lastBubble.querySelector('.speak-btn') : null;
-                    if (speakBtn) speakTextFromEl(speakBtn);
-                } else {
-                    setOrbState('idle');
-                }
-            } else {
-                setOrbState('idle');
-                if (data.error === 'api_key_missing') {
-                    appendMessage('assistant', `⚠️ <strong>Groq API Key не настроен:</strong> ${data.message} <br><button onclick="document.getElementById('open-settings-btn').click()" style="margin-top:8px; background: #6366f1; color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer;">Открыть настройки</button>`);
-                } else {
-                    appendMessage('assistant', `❌ <strong>Ошибка:</strong> ${data.message || 'Не удалось связаться с Groq'}`);
-                }
-            }
-        } catch (err) {
-            setOrbState('idle');
-            appendMessage('assistant', `❌ <strong>Ошибка сети:</strong> Проверьте подключение к интернету.`);
+    // Scroll Helper
+    function scrollToBottom() {
+        if (contentArea) {
+            setTimeout(() => {
+                contentArea.scrollTop = contentArea.scrollHeight;
+            }, 60);
         }
     }
 
+    // Append Message to Chat UI
     function appendMessage(role, text) {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${role}`;
 
         if (role === 'user') {
-            bubble.innerHTML = `<div class="bubble-user-content">${escapeHtml(text)}</div>`;
+            bubble.innerHTML = `<div class="bubble-user-content">${escapeHTML(text)}</div>`;
         } else {
+            // Process [Correction] block if present
+            let formattedText = escapeHTML(text);
+            const correctionMatch = formattedText.match(/\[Correction\]:\s*(.*?)(?=\n\n|\n[A-Z]|$)/s);
+            if (correctionMatch) {
+                const corrBlock = `<div class="correction-block"><strong>[Correction]</strong>${correctionMatch[1]}</div>`;
+                formattedText = formattedText.replace(correctionMatch[0], corrBlock);
+            }
+            formattedText = formattedText.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+
             bubble.innerHTML = `
-                <div class="bubble-assistant-content">${formatMarkdown(text)}</div>
+                <div class="bubble-assistant-content"><p>${formattedText}</p></div>
                 <div class="msg-actions-row">
                     <button class="action-icon-btn speak-btn" title="Озвучить" onclick="speakTextFromEl(this)">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -307,79 +322,138 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         chatMessages.appendChild(bubble);
-        contentArea.scrollTop = contentArea.scrollHeight;
+        scrollToBottom();
+
+        // Auto Speak if enabled
+        if (role === 'assistant') {
+            const autoSpeakCheck = document.getElementById('auto_speak');
+            if (autoSpeakCheck && autoSpeakCheck.checked) {
+                const speakBtn = bubble.querySelector('.speak-btn');
+                if (speakBtn) speakTextFromEl(speakBtn);
+            }
+        }
     }
 
-    function escapeHtml(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
     }
 
-    function formatMarkdown(text) {
-        return text
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/\[Correction\]:(.*?)(?=\n|$)/g, '<div class="correction-block"><strong>Correction:</strong>$1</div>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n\n/g, '</p><p>')
-            .replace(/\n/g, '<br>');
+    // Submit Message to Backend API
+    async function submitMessage(message) {
+        if (!message || !message.trim()) return;
+        const cleanMsg = message.trim();
+        chatInput.value = '';
+
+        appendMessage('user', cleanMsg);
+        setOrbState('thinking');
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: cleanMsg })
+            });
+
+            const data = await res.json();
+            setOrbState('idle');
+
+            if (res.ok && data.status === 'success') {
+                appendMessage('assistant', data.response);
+            } else if (data.error === 'api_key_missing') {
+                appendMessage('assistant', '⚠️ <strong>Groq API ключ не найден!</strong><br>Пожалуйста, нажмите на иконку настроек вверху справа и введите ваш бесплатный ключ с <a href="https://console.groq.com/keys" target="_blank" style="color: #60a5fa; text-decoration: underline;">console.groq.com</a>.');
+            } else {
+                appendMessage('assistant', `⚠️ Ошибка: ${data.message || 'Не удалось получить ответ от Groq.'}`);
+            }
+        } catch (err) {
+            setOrbState('idle');
+            console.error('Chat error:', err);
+            appendMessage('assistant', '⚠️ Ошибка подключения к серверу. Проверьте интернет-соединение.');
+        }
     }
 
-    // Save Settings
+    // Form Submit Listener
+    if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitMessage(chatInput.value);
+        });
+    }
+
+    // Quick Topic Chips
+    document.querySelectorAll('.topic-chip, .topic-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const prompt = btn.dataset.prompt;
+            if (prompt) {
+                if (drawerPanel.classList.contains('open')) closeDrawer();
+                submitMessage(prompt);
+            }
+        });
+    });
+
+    // New Chat Button
+    const newChatBtn = document.getElementById('new-chat-drawer-btn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeDrawer();
+            chatInput.focus();
+        });
+    }
+
+    // Settings Form Submission
     if (settingsForm) {
         settingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(settingsForm);
             const payload = {
-                groq_api_key: formData.get('groq_api_key'),
-                model_name: formData.get('model_name'),
-                english_level: formData.get('english_level'),
-                tutor_style: formData.get('tutor_style'),
-                voice_rate: parseFloat(formData.get('voice_rate')),
-                auto_speak: formData.get('auto_speak') ? 1 : 0
+                groq_api_key: document.getElementById('groq_api_key').value.trim(),
+                model_name: document.getElementById('model_name').value,
+                english_level: document.getElementById('english_level').value,
+                tutor_style: document.getElementById('tutor_style').value,
+                voice_rate: document.getElementById('voice_rate').value,
+                auto_speak: document.getElementById('auto_speak').checked
             };
 
             try {
                 const res = await fetch('/api/settings', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                const data = await res.json();
                 if (res.ok) {
                     alert('Настройки успешно сохранены!');
                     closeSettings();
                 } else {
-                    alert('Ошибка сохранения настроек');
+                    alert('Ошибка: ' + (data.message || 'Не удалось сохранить настройки'));
                 }
             } catch (err) {
-                alert('Сетевая ошибка');
+                alert('Ошибка сети при сохранении настроек');
             }
         });
     }
 
-    // Clear History Action
+    // Clear History
     if (clearHistoryRow) {
         clearHistoryRow.addEventListener('click', async () => {
-            if (confirm('Очистить историю диалогов?')) {
-                await fetch('/api/chat/clear', {method: 'POST'});
-                chatMessages.innerHTML = `
-                    <div class="chat-bubble assistant">
-                        <div class="bubble-assistant-content">
-                            <p>История очищена. О чем ты хочешь поговорить сегодня?</p>
-                        </div>
-                    </div>
-                `;
-                closeSettings();
+            if (!confirm('Вы уверены, что хотите очистить всю историю диалога?')) return;
+            try {
+                const res = await fetch('/api/chat/clear', { method: 'POST' });
+                if (res.ok) {
+                    chatMessages.innerHTML = '';
+                    closeSettings();
+                }
+            } catch (err) {
+                alert('Не удалось очистить историю');
             }
-        });
-    }
-
-    // New Chat Drawer Item
-    const newChatDrawerBtn = document.getElementById('new-chat-drawer-btn');
-    if (newChatDrawerBtn) {
-        newChatDrawerBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            closeDrawer();
-            chatInput.focus();
         });
     }
 });
